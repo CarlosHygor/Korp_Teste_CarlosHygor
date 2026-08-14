@@ -1,0 +1,26 @@
+{
+	"name": "Nota Fiscal - C# .NET 8 + Angular + Postgres",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "app",
+	"workspaceFolder": "/workspace",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-dotnettools.csharp",
+				"ms-dotnettools.csdevkit",
+				"angular.ng-template",
+				"cweijan.vscode-database-client2",
+				"dbaeumer.vscode-eslint",
+				"esbenp.prettier-vscode"
+			]
+		}
+	},
+	"forwardPorts": [
+		5000,
+		5001,
+		5200,
+		4200,
+		5432
+	],
+	"remoteUser": "vscode"
+}

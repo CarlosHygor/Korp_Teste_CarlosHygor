@@ -1,0 +1,13 @@
+<div class="hello-container">
+  <div class="card">
+    <h1>🚀 Hello World - Fullstack .NET + Angular</h1>
+    <p class="subtitle">Projeto limpo e preparado para o desenvolvimento passo a passo.</p>
+    
+    <div class="status-box" [ngClass]="statusConexao()">
+      <span class="status-indicator"></span>
+      <span class="status-text">{{ mensagemBackend() }}</span>
+    </div>
+
+    <button class="btn" (click)="testarConexao()">🔄 Testar Conexão com API C#</button>
+  </div>
+</div>
