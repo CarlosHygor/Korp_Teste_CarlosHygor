@@ -1,0 +1,57 @@
+using Estoque.API.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace Estoque.API.Data;
+
+public static class DbInitializer
+{
+    public static async Task SeedAsync(EstoqueDbContext context)
+    {
+        if (await context.Produtos.AnyAsync())
+        {
+            return; // Se a tabela já possui produtos, não faz nada
+        }
+
+        var produtos = new List<Produto>
+        {
+            new() { Codigo = "PROD-001", Descricao = "Notebook Dell Inspiron 15 (16GB RAM, 512GB SSD)", Saldo = 15 },
+            new() { Codigo = "PROD-002", Descricao = "Mouse Sem Fio Logitech MX Master 3S", Saldo = 40 },
+            new() { Codigo = "PROD-003", Descricao = "Teclado Mecânico Keychron K2 RGB", Saldo = 25 },
+            new() { Codigo = "PROD-004", Descricao = "Monitor LG UltraWide 29 IPS Full HD", Saldo = 12 },
+            new() { Codigo = "PROD-005", Descricao = "Cadeira de Escritório Ergonômica Comfy Ergofit", Saldo = 8 },
+            new() { Codigo = "PROD-006", Descricao = "Headset Gamer HyperX Cloud II Red", Saldo = 30 },
+            new() { Codigo = "PROD-007", Descricao = "Webcam Full HD Logitech C920s Pro", Saldo = 20 },
+            new() { Codigo = "PROD-008", Descricao = "SSD Kingston NV2 1TB M.2 NVMe", Saldo = 50 },
+            new() { Codigo = "PROD-009", Descricao = "Memória RAM Corsair Vengeance 16GB DDR4 3200MHz", Saldo = 45 },
+            new() { Codigo = "PROD-010", Descricao = "Processador AMD Ryzen 7 5700X", Saldo = 18 },
+            new() { Codigo = "PROD-011", Descricao = "Placa de Vídeo RTX 4060 Ventus 8GB", Saldo = 10 },
+            new() { Codigo = "PROD-012", Descricao = "Fonte Corsair CV650 650W 80 Plus Bronze", Saldo = 22 },
+            new() { Codigo = "PROD-013", Descricao = "Gabinete Gamer NZXT H5 Flow Black", Saldo = 14 },
+            new() { Codigo = "PROD-014", Descricao = "Water Cooler DeepCool LE520 240mm ARGB", Saldo = 16 },
+            new() { Codigo = "PROD-015", Descricao = "Placa-Mãe ASUS TUF Gaming B550M-Plus", Saldo = 15 },
+            new() { Codigo = "PROD-016", Descricao = "Fone de Ouvido Bluetooth Sony WH-1000XM5", Saldo = 7 },
+            new() { Codigo = "PROD-017", Descricao = "Mousepad Gamer Extra Grande 90x40cm Black", Saldo = 60 },
+            new() { Codigo = "PROD-018", Descricao = "Suporte Articulado para Monitor F80N ELG", Saldo = 35 },
+            new() { Codigo = "PROD-019", Descricao = "Filtro de Linha 8 Tomadas Clamper iClamper Energia 8", Saldo = 40 },
+            new() { Codigo = "PROD-020", Descricao = "Nobreak Intelbras Attiv 600VA 120V", Saldo = 11 },
+            new() { Codigo = "PROD-021", Descricao = "Impressora Multifuncional Epson EcoTank L3250", Saldo = 9 },
+            new() { Codigo = "PROD-022", Descricao = "Roteador Wi-Fi 6 TP-Link Archer AX12", Saldo = 28 },
+            new() { Codigo = "PROD-023", Descricao = "Switch TP-Link 8 Portas Gigabit TL-SG108", Saldo = 19 },
+            new() { Codigo = "PROD-024", Descricao = "Cabo HDMI 2.1 4K 120Hz 2 Metros", Saldo = 75 },
+            new() { Codigo = "PROD-025", Descricao = "Hub USB-C 7 em 1 Baseus Dual Type-C", Saldo = 33 },
+            new() { Codigo = "PROD-026", Descricao = "Mesa Gamer Com Regulagem de Altura Elétrica 140x70", Saldo = 5 },
+            new() { Codigo = "PROD-027", Descricao = "Luminária de Monitor Baseus i-Wok Stepless Dimming", Saldo = 24 },
+            new() { Codigo = "PROD-028", Descricao = "HD Externo Portátil Seagate Expansion 2TB", Saldo = 27 },
+            new() { Codigo = "PROD-029", Descricao = "Pendrive SanDisk Ultra Flair 64GB USB 3.0", Saldo = 80 },
+            new() { Codigo = "PROD-030", Descricao = "Adaptador Bluetooth 5.0 USB TP-Link UB500", Saldo = 55 },
+            new() { Codigo = "PROD-031", Descricao = "Microfone Condensador Fifine K669B USB", Saldo = 17 },
+            new() { Codigo = "PROD-032", Descricao = "Braço Articulado para Microfone Neewer NB-35", Saldo = 21 },
+            new() { Codigo = "PROD-033", Descricao = "Ring Light 10 Polegadas Com Tripé 1.60m", Saldo = 13 },
+            new() { Codigo = "PROD-034", Descricao = "Caixa de Som Edifier R1000T4 Bivolt 24W RMS", Saldo = 10 },
+            new() { Codigo = "PROD-035", Descricao = "Organizador de Cabos Espiral 2 Metros Preto", Saldo = 100 }
+        };
+
+        await context.Produtos.AddRangeAsync(produtos);
+        await context.SaveChangesAsync();
+    }
+}

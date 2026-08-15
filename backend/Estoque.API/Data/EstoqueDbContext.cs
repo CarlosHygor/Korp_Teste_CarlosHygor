@@ -19,7 +19,7 @@ public class EstoqueDbContext : DbContext
         // Mapeamento e restrições da tabela 'produtos' no PostgreSQL
         modelBuilder.Entity<Produto>(entity =>
         {
-            entity.ToTable("produtos");
+            entity.ToTable("produtos", t => t.HasCheckConstraint("CK_produtos_saldo", "\"Saldo\" >= 0"));
 
             entity.HasKey(p => p.Id);
             

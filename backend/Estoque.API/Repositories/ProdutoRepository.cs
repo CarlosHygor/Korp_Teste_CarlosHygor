@@ -1,0 +1,57 @@
+using Estoque.API.Data;
+using Estoque.API.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace Estoque.API.Repositories;
+
+public class ProdutoRepository : IProdutoRepository
+{
+    private readonly EstoqueDbContext _context;
+
+    public ProdutoRepository(EstoqueDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<IEnumerable<Produto>> GetAllAsync()
+    {
+        return await _context.Produtos
+                             .AsNoTracking()
+                             .ToListAsync();
+    }
+
+    public async Task<Produto?> GetByIdAsync(int id)
+    {
+        return await _context.Produtos
+                             .FirstOrDefaultAsync(p => p.Id == id);
+    }
+
+    public async Task<Produto?> GetByCodigoAsync(string codigo)
+    {
+        return await _context.Produtos
+                             .FirstOrDefaultAsync(p => p.Codigo == codigo);
+    }
+
+    public async Task<Produto> AddAsync(Produto produto)
+    {
+        await _context.Produtos.AddAsync(produto);
+        await _context.SaveChangesAsync();
+        return produto;
+    }
+
+    public async Task UpdateAsync(Produto produto)
+    {
+        _context.Produtos.Update(produto);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        var produto = await _context.Produtos.FindAsync(id);
+        if (produto != null)
+        {
+            _context.Produtos.Remove(produto);
+            await _context.SaveChangesAsync();
+        }
+    }
+}
