@@ -8,12 +8,13 @@ services:
     volumes:
       - ..:/workspace:cached
     ports:
-      - "5000:5000"
-      - "5200:5200"
-      - "4200:4200"
+      - "5001:5001"   # Estoque.API
+      - "5002:5002"   # Faturamento.API
+      - "4200:4200"   # Frontend Angular
     command: sleep infinity
     environment:
-      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=notafiscal_db;Username=postgres;Password=postgres
+      - ConnectionStrings__EstoqueConnection=Host=db;Port=5432;Database=estoque_db;Username=postgres;Password=postgres
+      - ConnectionStrings__FaturamentoConnection=Host=db;Port=5432;Database=faturamento_db;Username=postgres;Password=postgres
     networks:
       - devnet
 
@@ -23,11 +24,22 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: notafiscal_db
+      POSTGRES_DB: postgres
     ports:
-      - "5432:5432"
+      - "5432:5432"   # Porta mapeada para seu computador/host
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    networks:
+      - devnet
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"     # Interface Web tipo phpMyAdmin no navegador em http://localhost:5050
     networks:
       - devnet
 
