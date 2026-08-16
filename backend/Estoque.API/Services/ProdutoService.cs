@@ -23,12 +23,12 @@ public class ProdutoService : IProdutoService
         return await _produtoRepository.GetAllAsync();
     }
 
-    public async Task<PagedResultDto<Produto>> GetPaginatedAsync(int pagina, int tamanhoPagina)
+    public async Task<PagedResultDto<Produto>> GetPaginatedAsync(int pagina, int tamanhoPagina, string? ordenarPorSaldo = null)
     {
         var paginaValida = pagina <= 0 ? 1 : pagina;
         var tamanhoValido = tamanhoPagina <= 0 ? 10 : (tamanhoPagina > 100 ? 100 : tamanhoPagina);
 
-        var (itens, totalRegistros) = await _produtoRepository.GetPaginatedAsync(paginaValida, tamanhoValido);
+        var (itens, totalRegistros) = await _produtoRepository.GetPaginatedAsync(paginaValida, tamanhoValido, ordenarPorSaldo);
 
         var totalPaginas = (int)Math.Ceiling(totalRegistros / (double)tamanhoValido);
         var temPaginaAnterior = paginaValida > 1;

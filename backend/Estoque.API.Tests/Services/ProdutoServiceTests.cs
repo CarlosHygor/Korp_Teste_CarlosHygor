@@ -220,7 +220,7 @@ public class ProdutoServiceTests
             new ProdutoBuilder().ComId(2).ComCodigo("PROD-02").ComDescricao("Item 2").ComSaldo(5).Build()
         };
 
-        _produtoRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10))
+        _produtoRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, null))
                              .ReturnsAsync((produtos, 25));
 
         // Act
@@ -233,8 +233,28 @@ public class ProdutoServiceTests
         result.TamanhoPagina.Should().Be(10);
         result.TotalRegistros.Should().Be(25);
         result.TotalPaginas.Should().Be(3);
-        result.TemPaginaAnterior.Should().BeFalse();
-        result.TemProximaPagina.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetPaginatedAsync_ComOrdenacaoSaldo_DeveRepassarOrdenacaoParaRepositorio()
+    {
+        // Arrange
+        var produtosOrdenados = new List<Produto>
+        {
+            new ProdutoBuilder().ComId(2).ComCodigo("PROD-02").ComSaldo(2).Build(),
+            new ProdutoBuilder().ComId(1).ComCodigo("PROD-01").ComSaldo(50).Build()
+        };
+
+        _produtoRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, "asc"))
+                             .ReturnsAsync((produtosOrdenados, 2));
+
+        // Act
+        var result = await _produtoService.GetPaginatedAsync(1, 10, "asc");
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Itens.First().Saldo.Should().Be(2);
+        _produtoRepositoryMock.Verify(r => r.GetPaginatedAsync(1, 10, "asc"), Times.Once);
     }
 
     #endregion

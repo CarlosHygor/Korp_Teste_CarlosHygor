@@ -14,12 +14,16 @@ export class NotaFiscalService {
   constructor(private readonly http: HttpClient) {}
 
   /**
-   * Retorna a lista paginada de Notas Fiscais do Faturamento.API.
+   * Retorna a lista paginada de Notas Fiscais do Faturamento.API, com suporte a filtro por status.
    */
-  getPaginated(pagina: number = 1, tamanhoPagina: number = 10): Observable<PagedResult<NotaFiscal>> {
-    const params = new HttpParams()
+  getPaginated(pagina: number = 1, tamanhoPagina: number = 10, status?: string): Observable<PagedResult<NotaFiscal>> {
+    let params = new HttpParams()
       .set('pagina', pagina.toString())
       .set('tamanhoPagina', tamanhoPagina.toString());
+
+    if (status && status !== 'Todas') {
+      params = params.set('status', status);
+    }
 
     return this.http.get<PagedResult<NotaFiscal>>(this.apiUrl, { params });
   }

@@ -1,13 +1,64 @@
-<div class="hello-container">
-  <div class="card">
-    <h1>🚀 Hello World - Fullstack .NET + Angular</h1>
-    <p class="subtitle">Projeto limpo e preparado para o desenvolvimento passo a passo.</p>
-    
-    <div class="status-box" [ngClass]="statusConexao()">
-      <span class="status-indicator"></span>
-      <span class="status-text">{{ mensagemBackend() }}</span>
+<div class="app-container">
+  <header class="app-header">
+    <!-- Esquerda: Brand & Logo KORP ERP -->
+    <div class="header-left">
+      <div class="brand">
+        <div class="korp-logo-badge">
+          <div class="korp-main">
+            <span class="korp-brand">KORP</span>
+            <span class="erp-brand">ERP</span>
+          </div>
+          <div class="viasoft-bar">
+            <span class="viasoft-accent"></span>
+            <span class="viasoft-text">BY VIASOFT</span>
+          </div>
+        </div>
+        <div class="brand-divider"></div>
+        <div class="brand-info">
+          <div class="brand-title">Gestão de Faturamento & Estoque</div>
+          <div class="brand-subtitle">Desafio Técnico Fullstack .NET 8 + Angular</div>
+        </div>
+      </div>
     </div>
 
-    <button class="btn" (click)="testarConexao()">🔄 Testar Conexão com API C#</button>
-  </div>
+    <!-- Centro: Abas de Navegação perfeitamente centralizadas -->
+    <div class="header-center">
+      <nav class="nav-tabs">
+        <a routerLink="/produtos" routerLinkActive="active" class="nav-tab">
+          <svg class="tab-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+            <path d="m3.3 7 8.7 5 8.7-5"/>
+            <path d="M12 22V12"/>
+          </svg>
+          <span>Produtos (Estoque)</span>
+        </a>
+        <a routerLink="/notas-fiscais" routerLinkActive="active" class="nav-tab">
+          <svg class="tab-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
+            <path d="M14 2v4a2 2 0 0 0 2 2h4"/>
+            <path d="M10 9H8"/>
+            <path d="M16 13H8"/>
+            <path d="M16 17H8"/>
+          </svg>
+          <span>Notas Fiscais (Faturamento)</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Direita: Status dos Microsserviços -->
+    <div class="header-right">
+      <div class="env-badge">
+        <span class="env-dot"></span>
+        <span>APIs C# Online</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="app-footer">
+    <span>KORP ERP BY VIASOFT — Sistema de Emissão de Notas Fiscais & Controle de Saldo</span>
+  </footer>
 </div>

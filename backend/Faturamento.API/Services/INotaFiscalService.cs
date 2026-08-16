@@ -6,7 +6,7 @@ namespace Faturamento.API.Services;
 public interface INotaFiscalService
 {
     Task<IEnumerable<NotaFiscal>> GetAllAsync();
-    Task<PagedResultDto<NotaFiscal>> GetPaginatedAsync(int pagina, int tamanhoPagina);
+    Task<PagedResultDto<NotaFiscal>> GetPaginatedAsync(int pagina, int tamanhoPagina, StatusNotaFiscal? status = null);
     Task<NotaFiscal?> GetByIdAsync(int id);
     Task<NotaFiscal?> GetByNumeracaoAsync(long numeracao);
     Task<NotaFiscal> CreateAsync(NotaFiscal notaFiscal);

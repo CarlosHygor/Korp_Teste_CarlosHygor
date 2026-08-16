@@ -1,83 +1,335 @@
-:host {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background-color: #0f172a;
-  color: #f8fafc;
-  font-family: system-ui, -apple-system, sans-serif;
+/* Design System Tokens - KORP ERP by Viasoft Theme */
+:root {
+  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  /* KORP ERP Color Palette */
+  --bg-dark: #12222a;          /* Deep Slate Teal Background */
+  --bg-card: #1a2f3a;          /* Surface Card Slate */
+  --bg-card-hover: #223e4d;    /* Hover State Surface */
+  --bg-header: #162832;        /* Header Slate */
+  
+  /* Action & Accent Colors */
+  --primary: #0ea5e9;          /* Constructive Action Ocean Blue */
+  --primary-hover: #0284c7;    /* Primary Hover Slate Blue */
+  --primary-light: rgba(14, 165, 233, 0.15);
+  
+  --korp-red: #ff1744;         /* Viasoft Red Brand Accent (Logo/Destructive) */
+  --korp-red-hover: #d50032;   
+  --korp-cyan: #38bdf8;        /* Sky Blue Highlight */
+  
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border: #294656;
+  
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #f43f5e;
+}
+
+* {
+  box-sizing: border-box;
   margin: 0;
+  padding: 0;
 }
 
-.hello-container {
-  width: 100%;
-  max-width: 550px;
-  padding: 1.5rem;
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: var(--font-family);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
-.card {
-  background-color: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 1rem;
-  padding: 2.5rem 2rem;
-  text-align: center;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+/* Layout Main Container */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-.card h1 {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem 0;
-  color: #38bdf8;
+/* 3-Column Mathematically Centered Header */
+.app-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0.875rem 2rem;
+  background-color: var(--bg-header);
+  border-bottom: 2px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
-.subtitle {
-  color: #94a3b8;
-  font-size: 0.9rem;
-  margin-bottom: 2rem;
-}
-
-.status-box {
+.header-left {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+}
+
+.header-center {
+  display: flex;
   justify-content: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.9rem;
-  margin-bottom: 1.5rem;
+  align-items: center;
 }
 
-.status-box.carregando {
-  background-color: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  color: #60a5fa;
+.header-right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 }
 
-.status-box.sucesso {
-  background-color: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  color: #34d399;
+/* KORP ERP Brand Badge */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.status-box.erro {
-  background-color: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #f87171;
+.korp-logo-badge {
+  display: flex;
+  flex-direction: column;
+  background: #0f1c23;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid #294656;
 }
 
-.btn {
-  background-color: #0284c7;
+.korp-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.korp-brand {
+  font-size: 1.25rem;
+  font-weight: 900;
   color: #ffffff;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  letter-spacing: 0.05em;
+  line-height: 1;
 }
 
-.btn:hover {
-  background-color: #0369a1;
+.erp-brand {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+}
+
+.viasoft-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.125rem;
+  padding-top: 0.125rem;
+  border-top: 2px solid var(--korp-red);
+}
+
+.viasoft-accent {
+  width: 100%;
+}
+
+.viasoft-text {
+  font-size: 0.5625rem;
+  font-weight: 800;
+  color: var(--korp-red);
+  letter-spacing: 0.1em;
+}
+
+.brand-divider {
+  width: 1px;
+  height: 2.25rem;
+  background-color: var(--border);
+}
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+.brand-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Centered Navigation Tabs */
+.nav-tabs {
+  display: flex;
+  gap: 0.375rem;
+  background-color: #0d171d;
+  padding: 0.375rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 1.25rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.tab-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  transition: transform 0.2s ease;
+}
+
+.nav-tab:hover {
+  color: var(--text-main);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.nav-tab:hover .tab-icon {
+  transform: translateY(-1px);
+}
+
+.nav-tab.active {
+  color: #ffffff;
+  background-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+}
+
+.nav-tab.active .tab-icon {
+  color: #ffffff;
+}
+
+/* System Environment Badge */
+.env-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: #34d399;
+  font-weight: 600;
+}
+
+.env-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  background-color: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #10b981;
+}
+
+/* Main Content Area */
+.app-content {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Common Page Header Utility */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.page-title h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.page-title p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* Global Action Buttons with Constructive Primary Semantics */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: #243f4e;
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #2d4f62;
+}
+
+.btn-danger {
+  background-color: rgba(244, 63, 94, 0.15);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.3);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: rgba(244, 63, 94, 0.25);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Footer */
+.app-footer {
+  text-align: center;
+  padding: 1.25rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  background-color: var(--bg-header);
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .app-header {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  .header-left, .header-center, .header-right {
+    justify-content: center;
+  }
 }
