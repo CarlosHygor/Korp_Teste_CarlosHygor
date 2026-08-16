@@ -1,5 +1,7 @@
+using Faturamento.API.Builders;
 using Faturamento.API.Clients;
 using Faturamento.API.Clients.DTOs;
+using Faturamento.API.Exceptions;
 using Faturamento.API.Models;
 using Faturamento.API.Repositories;
 using Faturamento.API.Services;
@@ -26,7 +28,12 @@ public class NotaFiscalServiceTests
     public async Task GetByNumeracaoAsync_DeveRetornarNotaFiscal_QuandoNumeracaoExistir()
     {
         // Arrange
-        var notaEsperada = new NotaFiscal { Id = 1, Numeracao = 1001, Status = StatusNotaFiscal.Aberta };
+        var notaEsperada = new NotaFiscalBuilder()
+            .ComId(1)
+            .ComNumeracao(1001)
+            .ComStatus(StatusNotaFiscal.Aberta)
+            .Build();
+
         _notaFiscalRepositoryMock
             .Setup(r => r.GetByNumeracaoAsync(1001))
             .ReturnsAsync(notaEsperada);
@@ -44,13 +51,9 @@ public class NotaFiscalServiceTests
     public async Task CreateAsync_DeveCriarNotaFiscalComStatusAbertaEDataUtc_QuandoDadosForemValidos()
     {
         // Arrange
-        var notaInput = new NotaFiscal
-        {
-            Itens = new List<ItemNotaFiscal>
-            {
-                new ItemNotaFiscal { CodigoProduto = "PROD-001", DescricaoProduto = "Notebook", Quantidade = 1 }
-            }
-        };
+        var notaInput = new NotaFiscalBuilder()
+            .ComItem("PROD-001", "Notebook", 1)
+            .Build();
 
         _notaFiscalRepositoryMock
             .Setup(r => r.CreateAsync(It.IsAny<NotaFiscal>()))
@@ -70,7 +73,7 @@ public class NotaFiscalServiceTests
     public async Task CreateAsync_DeveLancarArgumentException_QuandoNotaNaoPossuirItens()
     {
         // Arrange
-        var notaSemItens = new NotaFiscal { Itens = new List<ItemNotaFiscal>() };
+        var notaSemItens = new NotaFiscalBuilder().Build();
 
         // Act
         var act = async () => await _service.CreateAsync(notaSemItens);
@@ -84,17 +87,13 @@ public class NotaFiscalServiceTests
     public async Task ImprimirAsync_DeveAbaterEstoqueEmLoteEAtualizarStatusParaFechada_QuandoNotaEstiverAberta()
     {
         // Arrange
-        var notaAberta = new NotaFiscal
-        {
-            Id = 1,
-            Numeracao = 1001,
-            Status = StatusNotaFiscal.Aberta,
-            Itens = new List<ItemNotaFiscal>
-            {
-                new ItemNotaFiscal { CodigoProduto = "PROD-001", Quantidade = 2 },
-                new ItemNotaFiscal { CodigoProduto = "PROD-002", Quantidade = 1 }
-            }
-        };
+        var notaAberta = new NotaFiscalBuilder()
+            .ComId(1)
+            .ComNumeracao(1001)
+            .ComStatus(StatusNotaFiscal.Aberta)
+            .ComItem("PROD-001", "Notebook", 2)
+            .ComItem("PROD-002", "Mouse", 1)
+            .Build();
 
         _notaFiscalRepositoryMock
             .Setup(r => r.GetByIdAsync(1))
@@ -114,19 +113,15 @@ public class NotaFiscalServiceTests
     }
 
     [Fact]
-    public async Task ImprimirAsync_DeveLancarInvalidOperationException_QuandoNotaJaEstiverFechada()
+    public async Task ImprimirAsync_DeveLancarNotaFiscalStatusInvalidoException_QuandoNotaJaEstiverFechada()
     {
         // Arrange
-        var notaFechada = new NotaFiscal
-        {
-            Id = 1,
-            Numeracao = 1001,
-            Status = StatusNotaFiscal.Fechada,
-            Itens = new List<ItemNotaFiscal>
-            {
-                new ItemNotaFiscal { CodigoProduto = "PROD-001", Quantidade = 1 }
-            }
-        };
+        var notaFechada = new NotaFiscalBuilder()
+            .ComId(1)
+            .ComNumeracao(1001)
+            .ComStatus(StatusNotaFiscal.Fechada)
+            .ComItem("PROD-001", "Notebook", 1)
+            .Build();
 
         _notaFiscalRepositoryMock
             .Setup(r => r.GetByIdAsync(1))
@@ -136,7 +131,7 @@ public class NotaFiscalServiceTests
         var act = async () => await _service.ImprimirAsync(1);
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<NotaFiscalStatusInvalidoException>()
             .WithMessage("*já está com status 'Fechada'*");
 
         _estoqueClientMock.Verify(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>()), Times.Never);
@@ -147,16 +142,12 @@ public class NotaFiscalServiceTests
     public async Task ImprimirAsync_DeveManterNotaAbertaEPropagarExcecao_QuandoAbateEmLoteFalhar()
     {
         // Arrange
-        var notaAberta = new NotaFiscal
-        {
-            Id = 1,
-            Numeracao = 1001,
-            Status = StatusNotaFiscal.Aberta,
-            Itens = new List<ItemNotaFiscal>
-            {
-                new ItemNotaFiscal { CodigoProduto = "PROD-001", Quantidade = 2 }
-            }
-        };
+        var notaAberta = new NotaFiscalBuilder()
+            .ComId(1)
+            .ComNumeracao(1001)
+            .ComStatus(StatusNotaFiscal.Aberta)
+            .ComItem("PROD-001", "Notebook", 2)
+            .Build();
 
         _notaFiscalRepositoryMock
             .Setup(r => r.GetByIdAsync(1))
@@ -164,13 +155,13 @@ public class NotaFiscalServiceTests
 
         _estoqueClientMock
             .Setup(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>()))
-            .ThrowsAsync(new InvalidOperationException("Serviço de estoque indisponível"));
+            .ThrowsAsync(new NotaFiscalStatusInvalidoException("Serviço de estoque indisponível"));
 
         // Act
         var act = async () => await _service.ImprimirAsync(1);
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<NotaFiscalStatusInvalidoException>()
             .WithMessage("*estoque indisponível*");
 
         notaAberta.Status.Should().Be(StatusNotaFiscal.Aberta);
@@ -181,16 +172,12 @@ public class NotaFiscalServiceTests
     public async Task ImprimirAsync_DeveDispararEstornoDeEstoque_QuandoUpdateDoBancoFaturamentoFalhar()
     {
         // Arrange
-        var notaAberta = new NotaFiscal
-        {
-            Id = 1,
-            Numeracao = 1001,
-            Status = StatusNotaFiscal.Aberta,
-            Itens = new List<ItemNotaFiscal>
-            {
-                new ItemNotaFiscal { CodigoProduto = "PROD-001", Quantidade = 2 }
-            }
-        };
+        var notaAberta = new NotaFiscalBuilder()
+            .ComId(1)
+            .ComNumeracao(1001)
+            .ComStatus(StatusNotaFiscal.Aberta)
+            .ComItem("PROD-001", "Notebook", 2)
+            .Build();
 
         _notaFiscalRepositoryMock
             .Setup(r => r.GetByIdAsync(1))
@@ -213,11 +200,38 @@ public class NotaFiscalServiceTests
         var act = async () => await _service.ImprimirAsync(1);
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<NotaFiscalStatusInvalidoException>()
             .WithMessage("*revertido com sucesso*");
 
         // Valida que o abate foi feito primeiro E em seguida a Ação Compensatória de estorno foi acionada
         _estoqueClientMock.Verify(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>()), Times.Once);
         _estoqueClientMock.Verify(c => c.EstornarEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPaginatedAsync_DeveRetornarResultadoPaginadoEPropriedadesCalculadas()
+    {
+        // Arrange
+        var notas = new List<NotaFiscal>
+        {
+            new NotaFiscalBuilder().ComId(1).ComNumeracao(1001).ComStatus(StatusNotaFiscal.Aberta).Build(),
+            new NotaFiscalBuilder().ComId(2).ComNumeracao(1002).ComStatus(StatusNotaFiscal.Fechada).Build()
+        };
+
+        _notaFiscalRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10))
+                                 .ReturnsAsync((notas, 35));
+
+        // Act
+        var result = await _service.GetPaginatedAsync(1, 10);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Itens.Count().Should().Be(2);
+        result.PaginaAtual.Should().Be(1);
+        result.TamanhoPagina.Should().Be(10);
+        result.TotalRegistros.Should().Be(35);
+        result.TotalPaginas.Should().Be(4);
+        result.TemPaginaAnterior.Should().BeFalse();
+        result.TemProximaPagina.Should().BeTrue();
     }
 }

@@ -1,5 +1,7 @@
 using Faturamento.API.Clients;
 using Faturamento.API.Clients.DTOs;
+using Faturamento.API.DTOs;
+using Faturamento.API.Exceptions;
 using Faturamento.API.Models;
 using Faturamento.API.Repositories;
 
@@ -19,6 +21,28 @@ public class NotaFiscalService : INotaFiscalService
     public async Task<IEnumerable<NotaFiscal>> GetAllAsync()
     {
         return await _notaFiscalRepository.GetAllAsync();
+    }
+
+    public async Task<PagedResultDto<NotaFiscal>> GetPaginatedAsync(int pagina, int tamanhoPagina)
+    {
+        var paginaValida = pagina <= 0 ? 1 : pagina;
+        var tamanhoValido = tamanhoPagina <= 0 ? 10 : (tamanhoPagina > 100 ? 100 : tamanhoPagina);
+
+        var (itens, totalRegistros) = await _notaFiscalRepository.GetPaginatedAsync(paginaValida, tamanhoValido);
+
+        var totalPaginas = (int)Math.Ceiling(totalRegistros / (double)tamanhoValido);
+        var temPaginaAnterior = paginaValida > 1;
+        var temProximaPagina = paginaValida < totalPaginas;
+
+        return new PagedResultDto<NotaFiscal>(
+            itens,
+            paginaValida,
+            tamanhoValido,
+            totalRegistros,
+            totalPaginas,
+            temPaginaAnterior,
+            temProximaPagina
+        );
     }
 
     public async Task<NotaFiscal?> GetByIdAsync(int id)
@@ -63,18 +87,18 @@ public class NotaFiscalService : INotaFiscalService
         var notaFiscal = await _notaFiscalRepository.GetByIdAsync(id);
         if (notaFiscal == null)
         {
-            throw new KeyNotFoundException($"Nota Fiscal com ID {id} não foi encontrada.");
+            throw new NotaFiscalNaoEncontradaException(id);
         }
 
         // Não permitir impressão de notas que não estejam com status Aberta
         if (notaFiscal.Status != StatusNotaFiscal.Aberta)
         {
-            throw new InvalidOperationException($"A Nota Fiscal nº {notaFiscal.Numeracao} já está com status '{notaFiscal.Status}' e não pode ser impressa novamente.");
+            throw new NotaFiscalStatusInvalidoException($"A Nota Fiscal nº {notaFiscal.Numeracao} já está com status '{notaFiscal.Status}' e não pode ser impressa novamente.");
         }
 
         if (notaFiscal.Itens == null || !notaFiscal.Itens.Any())
         {
-            throw new InvalidOperationException($"A Nota Fiscal nº {notaFiscal.Numeracao} não possui itens para impressão.");
+            throw new NotaFiscalStatusInvalidoException($"A Nota Fiscal nº {notaFiscal.Numeracao} não possui itens para impressão.");
         }
 
         // Mapeia os itens da Nota Fiscal para a requisição de lote do Estoque.API
@@ -95,7 +119,7 @@ public class NotaFiscalService : INotaFiscalService
         {
             // 3. Ação Compensatória: Se a gravação no banco do Faturamento falhar, estorna a baixa de estoque no Estoque.API
             await _estoqueClient.EstornarEstoqueLoteAsync(itensAbate);
-            throw new InvalidOperationException($"Falha ao atualizar o status da Nota Fiscal no banco de dados. O abate de estoque foi revertido com sucesso.", ex);
+            throw new NotaFiscalStatusInvalidoException($"Falha ao atualizar o status da Nota Fiscal no banco de dados. O abate de estoque foi revertido com sucesso.", ex);
         }
 
         return notaFiscal;
@@ -106,12 +130,12 @@ public class NotaFiscalService : INotaFiscalService
         var notaFiscalExistente = await _notaFiscalRepository.GetByIdAsync(id);
         if (notaFiscalExistente == null)
         {
-            throw new KeyNotFoundException($"Nota Fiscal com ID {id} não foi encontrada.");
+            throw new NotaFiscalNaoEncontradaException(id);
         }
 
         if (notaFiscalExistente.Status == StatusNotaFiscal.Fechada)
         {
-            throw new InvalidOperationException($"Nota Fiscal com ID {id} está FECHADA e não pode ser alterada.");
+            throw new NotaFiscalStatusInvalidoException($"Nota Fiscal com ID {id} está FECHADA e não pode ser alterada.");
         }
 
         notaFiscalExistente.Status = notaFiscalAtualizada.Status;
@@ -125,12 +149,12 @@ public class NotaFiscalService : INotaFiscalService
         var notaFiscal = await _notaFiscalRepository.GetByIdAsync(id);
         if (notaFiscal == null)
         {
-            throw new KeyNotFoundException($"Nota Fiscal com ID {id} não foi encontrada.");
+            throw new NotaFiscalNaoEncontradaException(id);
         }
 
         if (notaFiscal.Status == StatusNotaFiscal.Fechada)
         {
-            throw new InvalidOperationException($"Nota Fiscal com ID {id} está FECHADA e não pode ser excluída.");
+            throw new NotaFiscalStatusInvalidoException($"Nota Fiscal com ID {id} está FECHADA e não pode ser excluída.");
         }
 
         await _notaFiscalRepository.DeleteAsync(notaFiscal);

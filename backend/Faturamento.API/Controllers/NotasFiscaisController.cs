@@ -18,14 +18,25 @@ public class NotasFiscaisController : ControllerBase
     }
 
     /// <summary>
-    /// Retorna a lista de todas as notas fiscais cadastradas.
+    /// Retorna a lista paginada de todas as notas fiscais cadastradas.
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<NotaFiscalResponseDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll()
+    [ProducesResponseType(typeof(PagedResultDto<NotaFiscalResponseDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll([FromQuery] int pagina = 1, [FromQuery] int tamanhoPagina = 10)
     {
-        var notas = await _notaFiscalService.GetAllAsync();
-        return Ok(notas.ToResponseDtoList());
+        var resultadoPaginado = await _notaFiscalService.GetPaginatedAsync(pagina, tamanhoPagina);
+
+        var dtoPaginado = new PagedResultDto<NotaFiscalResponseDto>(
+            resultadoPaginado.Itens.ToResponseDtoList(),
+            resultadoPaginado.PaginaAtual,
+            resultadoPaginado.TamanhoPagina,
+            resultadoPaginado.TotalRegistros,
+            resultadoPaginado.TotalPaginas,
+            resultadoPaginado.TemPaginaAnterior,
+            resultadoPaginado.TemProximaPagina
+        );
+
+        return Ok(dtoPaginado);
     }
 
     /// <summary>
@@ -70,18 +81,11 @@ public class NotasFiscaisController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateNotaFiscalDto dto)
     {
-        try
-        {
-            var entidade = dto.ToEntity();
-            var notaCriada = await _notaFiscalService.CreateAsync(entidade);
-            var responseDto = notaCriada.ToResponseDto();
+        var entidade = dto.ToEntity();
+        var notaCriada = await _notaFiscalService.CreateAsync(entidade);
+        var responseDto = notaCriada.ToResponseDto();
 
-            return CreatedAtAction(nameof(GetById), new { id = responseDto.Id }, responseDto);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { mensagem = ex.Message });
-        }
+        return CreatedAtAction(nameof(GetById), new { id = responseDto.Id }, responseDto);
     }
 
     /// <summary>
@@ -94,23 +98,8 @@ public class NotasFiscaisController : ControllerBase
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> Imprimir(int id)
     {
-        try
-        {
-            var notaImpressa = await _notaFiscalService.ImprimirAsync(id);
-            return Ok(notaImpressa.ToResponseDto());
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { mensagem = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { mensagem = ex.Message });
-        }
-        catch (HttpRequestException ex)
-        {
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { mensagem = ex.Message });
-        }
+        var notaImpressa = await _notaFiscalService.ImprimirAsync(id);
+        return Ok(notaImpressa.ToResponseDto());
     }
 
     /// <summary>
@@ -122,18 +111,7 @@ public class NotasFiscaisController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
-        try
-        {
-            await _notaFiscalService.DeleteAsync(id);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { mensagem = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { mensagem = ex.Message });
-        }
+        await _notaFiscalService.DeleteAsync(id);
+        return NoContent();
     }
 }

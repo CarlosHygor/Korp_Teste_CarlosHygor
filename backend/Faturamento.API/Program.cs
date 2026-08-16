@@ -1,41 +1,12 @@
-using Faturamento.API.Clients;
+using Faturamento.API.Configuration;
 using Faturamento.API.Data;
-using Faturamento.API.Repositories;
-using Faturamento.API.Services;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuração de CORS para liberar chamadas do frontend Angular (porta 4200)
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAngular", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
-
-// Configuração do DbContext do Entity Framework Core com PostgreSQL (faturamento_db)
-var connectionString = builder.Configuration.GetConnectionString("FaturamentoConnection");
-builder.Services.AddDbContext<FaturamentoDbContext>(options =>
-    options.UseNpgsql(connectionString));
-
-// Cliente HTTP para integração com Estoque.API (WebClient / FeignClient no Spring)
-builder.Services.AddHttpClient<IEstoqueClient, EstoqueClient>(client =>
-{
-    var estoqueUrl = builder.Configuration["Services:EstoqueUrl"] ?? "http://localhost:5000";
-    client.BaseAddress = new Uri(estoqueUrl.EndsWith("/") ? estoqueUrl : $"{estoqueUrl}/");
-});
-
-// Injeção de Dependência dos Repositórios (Scoped ~ @RequestScope / Spring Bean Scoped)
-builder.Services.AddScoped<INotaFiscalRepository, NotaFiscalRepository>();
-builder.Services.AddScoped<IItemNotaFiscalRepository, ItemNotaFiscalRepository>();
-
-// Injeção de Dependência da Camada de Serviços
-builder.Services.AddScoped<IItemNotaFiscalService, ItemNotaFiscalService>();
-builder.Services.AddScoped<INotaFiscalService, NotaFiscalService>();
+// Configuração modular de serviços via Extension Methods (.NET 8 Clean Architecture)
+builder.Services
+    .AddCorsConfiguration()
+    .AddApplicationServices(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -43,7 +14,10 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Garantir que a base de dados faturamento_db seja recriada no PostgreSQL com o esquema correto e popular Seed Data
+// Ativa o middleware global de exceções
+app.UseExceptionHandler();
+
+// Inicialização e Seed da base de dados PostgreSQL faturamento_db
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<FaturamentoDbContext>();
@@ -63,12 +37,8 @@ app.UseCors("AllowAngular");
 
 app.MapControllers();
 
-app.MapGet("/api/faturamento/ping", () => new
-{
-    servico = "Faturamento.API",
-    status = "ok",
-    horario = DateTime.UtcNow
-});
+// Health Check nativo do ASP.NET Core (/health)
+app.MapHealthChecks("/health");
 
 app.Run();
 

@@ -1,3 +1,4 @@
+using Estoque.API.Builders;
 using Estoque.API.DTOs;
 using Estoque.API.Models;
 
@@ -5,15 +6,14 @@ namespace Estoque.API.Mappers;
 
 public static class ProdutoMapper
 {
-    // Converte ProdutoDto (record) para a entidade Produto
+    // Converte ProdutoDto (record) para a entidade Produto utilizando o ProdutoBuilder
     public static Produto ToEntity(this ProdutoDto dto)
     {
-        return new Produto
-        {
-            Codigo = dto.Codigo.Trim(),
-            Descricao = dto.Descricao.Trim(),
-            Saldo = dto.Saldo
-        };
+        return new ProdutoBuilder()
+            .ComCodigo(dto.Codigo.Trim())
+            .ComDescricao(dto.Descricao.Trim())
+            .ComSaldo(dto.Saldo)
+            .Build();
     }
 
     // Converte a entidade Produto para ProdutoResponseDto (record)

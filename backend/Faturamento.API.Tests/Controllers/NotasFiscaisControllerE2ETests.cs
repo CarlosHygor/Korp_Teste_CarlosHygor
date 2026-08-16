@@ -81,9 +81,10 @@ public class NotasFiscaisControllerE2ETests : IClassFixture<WebApplicationFactor
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var notas = await response.Content.ReadFromJsonAsync<List<NotaFiscalResponseDto>>();
-        notas.Should().NotBeNull();
-        notas.Should().NotBeEmpty();
+        var resultadoPaginado = await response.Content.ReadFromJsonAsync<PagedResultDto<NotaFiscalResponseDto>>();
+        resultadoPaginado.Should().NotBeNull();
+        resultadoPaginado!.Itens.Should().NotBeEmpty();
+        resultadoPaginado.TotalRegistros.Should().BeGreaterThan(0);
     }
 
     [Fact]

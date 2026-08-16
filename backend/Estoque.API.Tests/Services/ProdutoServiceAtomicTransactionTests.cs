@@ -63,7 +63,7 @@ public class ProdutoServiceAtomicTransactionTests : IDisposable
         Func<Task> act = async () => await _produtoService.AbaterEstoqueLoteAsync(loteComFalha);
 
         // Assert
-        await act.Should().ThrowAsync<KeyNotFoundException>();
+        await act.Should().ThrowAsync<ProdutoNaoEncontradoException>();
 
         // Limpa o ChangeTracker do EF Core em memória para consultar o estado real revertido do banco SQLite
         _context.ChangeTracker.Clear();

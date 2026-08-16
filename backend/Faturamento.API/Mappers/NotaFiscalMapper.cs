@@ -1,3 +1,4 @@
+using Faturamento.API.Builders;
 using Faturamento.API.DTOs;
 using Faturamento.API.Models;
 
@@ -5,26 +6,32 @@ namespace Faturamento.API.Mappers;
 
 public static class NotaFiscalMapper
 {
-    // Converte CreateNotaFiscalDto para a entidade NotaFiscal
+    // Converte CreateNotaFiscalDto para a entidade NotaFiscal utilizando os Builders
     public static NotaFiscal ToEntity(this CreateNotaFiscalDto dto)
     {
-        return new NotaFiscal
+        var builder = new NotaFiscalBuilder()
+            .ComStatus(StatusNotaFiscal.Aberta)
+            .ComDataCriacao(DateTime.UtcNow);
+
+        if (dto.Itens != null)
         {
-            Status = StatusNotaFiscal.Aberta,
-            DataCriacao = DateTime.UtcNow,
-            Itens = dto.Itens.Select(i => i.ToEntity()).ToList()
-        };
+            foreach (var itemDto in dto.Itens)
+            {
+                builder.ComItem(itemDto.ToEntity());
+            }
+        }
+
+        return builder.Build();
     }
 
-    // Converte CreateItemNotaFiscalDto para a entidade ItemNotaFiscal
+    // Converte CreateItemNotaFiscalDto para a entidade ItemNotaFiscal utilizando o ItemNotaFiscalBuilder
     public static ItemNotaFiscal ToEntity(this CreateItemNotaFiscalDto dto)
     {
-        return new ItemNotaFiscal
-        {
-            CodigoProduto = dto.CodigoProduto.Trim(),
-            DescricaoProduto = dto.DescricaoProduto.Trim(),
-            Quantidade = dto.Quantidade
-        };
+        return new ItemNotaFiscalBuilder()
+            .ComCodigoProduto(dto.CodigoProduto.Trim())
+            .ComDescricaoProduto(dto.DescricaoProduto.Trim())
+            .ComQuantidade(dto.Quantidade)
+            .Build();
     }
 
     // Converte a entidade NotaFiscal para NotaFiscalResponseDto

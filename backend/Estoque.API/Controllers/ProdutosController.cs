@@ -19,15 +19,26 @@ public class ProdutosController : ControllerBase
         _produtoService = produtoService;
     }
 
-    /// <summary>A
-    /// Retorna a lista de todos os produtos cadastrados no estoque.
+    /// <summary>
+    /// Retorna a lista paginada de produtos cadastrados no estoque.
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<ProdutoResponseDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll()
+    [ProducesResponseType(typeof(PagedResultDto<ProdutoResponseDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll([FromQuery] int pagina = 1, [FromQuery] int tamanhoPagina = 10)
     {
-        var produtos = await _produtoService.GetAllAsync();
-        return Ok(produtos.ToResponseDtoList());
+        var resultadoPaginado = await _produtoService.GetPaginatedAsync(pagina, tamanhoPagina);
+
+        var dtoPaginado = new PagedResultDto<ProdutoResponseDto>(
+            resultadoPaginado.Itens.ToResponseDtoList(),
+            resultadoPaginado.PaginaAtual,
+            resultadoPaginado.TamanhoPagina,
+            resultadoPaginado.TotalRegistros,
+            resultadoPaginado.TotalPaginas,
+            resultadoPaginado.TemPaginaAnterior,
+            resultadoPaginado.TemProximaPagina
+        );
+
+        return Ok(dtoPaginado);
     }
 
     /// <summary>
@@ -73,22 +84,11 @@ public class ProdutosController : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Create([FromBody] ProdutoDto dto)
     {
-        try
-        {
-            var entidade = dto.ToEntity();
-            var produtoCriado = await _produtoService.CreateAsync(entidade);
-            var responseDto = produtoCriado.ToResponseDto();
+        var entidade = dto.ToEntity();
+        var produtoCriado = await _produtoService.CreateAsync(entidade);
+        var responseDto = produtoCriado.ToResponseDto();
 
-            return CreatedAtAction(nameof(GetById), new { id = responseDto.Id }, responseDto);
-        }
-        catch (CodigoProdutoDuplicadoException ex)
-        {
-            return Conflict(new { mensagem = ex.Message });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { mensagem = ex.Message });
-        }
+        return CreatedAtAction(nameof(GetById), new { id = responseDto.Id }, responseDto);
     }
 
     /// <summary>
@@ -101,24 +101,9 @@ public class ProdutosController : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Update(int id, [FromBody] ProdutoDto dto)
     {
-        try
-        {
-            var entidade = dto.ToEntity();
-            await _produtoService.UpdateAsync(id, entidade);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { mensagem = ex.Message });
-        }
-        catch (CodigoProdutoDuplicadoException ex)
-        {
-            return Conflict(new { mensagem = ex.Message });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { mensagem = ex.Message });
-        }
+        var entidade = dto.ToEntity();
+        await _produtoService.UpdateAsync(id, entidade);
+        return NoContent();
     }
 
     /// <summary>
@@ -129,15 +114,8 @@ public class ProdutosController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
-        try
-        {
-            await _produtoService.DeleteAsync(id);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { mensagem = ex.Message });
-        }
+        await _produtoService.DeleteAsync(id);
+        return NoContent();
     }
 
     /// <summary>
@@ -150,29 +128,8 @@ public class ProdutosController : ControllerBase
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> AbaterEstoque(string codigo, [FromBody] AbaterEstoqueDto dto)
     {
-        try
-        {
-            await _produtoService.AbaterEstoqueAsync(codigo, dto.Quantidade);
-            return Ok(new { mensagem = $"Estoque do produto '{codigo}' abatido em {dto.Quantidade} unidade(s) com sucesso." });
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { mensagem = ex.Message });
-        }
-        catch (EstoqueInsuficienteException ex)
-        {
-            return UnprocessableEntity(new
-            {
-                mensagem = ex.Message,
-                codigoProduto = ex.CodigoProduto,
-                saldoAtual = ex.SaldoAtual,
-                quantidadeSolicitada = ex.QuantidadeSolicitada
-            });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { mensagem = ex.Message });
-        }
+        await _produtoService.AbaterEstoqueAsync(codigo, dto.Quantidade);
+        return Ok(new { mensagem = $"Estoque do produto '{codigo}' abatido em {dto.Quantidade} unidade(s) com sucesso." });
     }
 
     /// <summary>
@@ -185,29 +142,8 @@ public class ProdutosController : ControllerBase
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> AbaterEstoqueLote([FromBody] List<AbaterItemEstoqueDto> itens)
     {
-        try
-        {
-            await _produtoService.AbaterEstoqueLoteAsync(itens);
-            return Ok(new { mensagem = $"Abate em lote de {itens?.Count ?? 0} produto(s) realizado com sucesso no estoque." });
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { mensagem = ex.Message });
-        }
-        catch (EstoqueInsuficienteException ex)
-        {
-            return UnprocessableEntity(new
-            {
-                mensagem = ex.Message,
-                codigoProduto = ex.CodigoProduto,
-                saldoAtual = ex.SaldoAtual,
-                quantidadeSolicitada = ex.QuantidadeSolicitada
-            });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { mensagem = ex.Message });
-        }
+        await _produtoService.AbaterEstoqueLoteAsync(itens);
+        return Ok(new { mensagem = $"Abate em lote de {itens?.Count ?? 0} produto(s) realizado com sucesso no estoque." });
     }
 
     /// <summary>
@@ -218,14 +154,7 @@ public class ProdutosController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> EstornarEstoqueLote([FromBody] List<AbaterItemEstoqueDto> itens)
     {
-        try
-        {
-            await _produtoService.EstornarEstoqueLoteAsync(itens);
-            return Ok(new { mensagem = $"Estorno de estoque em lote de {itens?.Count ?? 0} produto(s) realizado com sucesso." });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { mensagem = ex.Message });
-        }
+        await _produtoService.EstornarEstoqueLoteAsync(itens);
+        return Ok(new { mensagem = $"Estorno de estoque em lote de {itens?.Count ?? 0} produto(s) realizado com sucesso." });
     }
 }

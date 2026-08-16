@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Faturamento.API.Clients.DTOs;
+using Faturamento.API.Exceptions;
 
 namespace Faturamento.API.Clients;
 
@@ -33,14 +34,14 @@ public class EstoqueClient : IEstoqueClient
             if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                throw new InvalidOperationException($"Saldo insuficiente ou dados inválidos no produto '{codigoProduto}': {content}");
+                throw new NotaFiscalStatusInvalidoException($"Saldo insuficiente ou dados inválidos no produto '{codigoProduto}': {content}");
             }
 
-            throw new HttpRequestException($"Serviço de estoque retornou erro (HTTP Status: {(int)response.StatusCode}).");
+            throw new ServicoEstoqueIndisponivelException($"Serviço de estoque retornou erro (HTTP Status: {(int)response.StatusCode}).");
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException ex) when (ex is not ServicoEstoqueIndisponivelException)
         {
-            throw new InvalidOperationException($"Falha de comunicação com o Estoque.API ao tentar abater o produto '{codigoProduto}'. A nota fiscal permanece ABERTA.", ex);
+            throw new ServicoEstoqueIndisponivelException($"Falha de comunicação com o Estoque.API ao tentar abater o produto '{codigoProduto}'. A nota fiscal permanece ABERTA.", ex);
         }
     }
 
@@ -64,14 +65,14 @@ public class EstoqueClient : IEstoqueClient
             if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                throw new InvalidOperationException($"Saldo insuficiente para um ou mais produtos da nota: {content}");
+                throw new NotaFiscalStatusInvalidoException($"Saldo insuficiente para um ou mais produtos da nota: {content}");
             }
 
-            throw new HttpRequestException($"Serviço de estoque retornou erro (HTTP Status: {(int)response.StatusCode}).");
+            throw new ServicoEstoqueIndisponivelException($"Serviço de estoque retornou erro (HTTP Status: {(int)response.StatusCode}).");
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException ex) when (ex is not ServicoEstoqueIndisponivelException)
         {
-            throw new InvalidOperationException("Falha de comunicação com o Estoque.API ao tentar abater o lote de produtos. A nota fiscal permanece ABERTA.", ex);
+            throw new ServicoEstoqueIndisponivelException("Falha de comunicação com o Estoque.API ao tentar abater o lote de produtos. A nota fiscal permanece ABERTA.", ex);
         }
     }
 
@@ -84,12 +85,12 @@ public class EstoqueClient : IEstoqueClient
             if (!response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Erro ao estornar lote no estoque (HTTP Status {(int)response.StatusCode}): {content}");
+                throw new ServicoEstoqueIndisponivelException($"Erro ao estornar lote no estoque (HTTP Status {(int)response.StatusCode}): {content}");
             }
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException ex) when (ex is not ServicoEstoqueIndisponivelException)
         {
-            throw new InvalidOperationException("Falha de comunicação com o Estoque.API durante a Ação Compensatória de estorno.", ex);
+            throw new ServicoEstoqueIndisponivelException("Falha de comunicação com o Estoque.API durante a Ação Compensatória de estorno.", ex);
         }
     }
 }

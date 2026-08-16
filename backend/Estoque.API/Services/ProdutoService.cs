@@ -23,6 +23,28 @@ public class ProdutoService : IProdutoService
         return await _produtoRepository.GetAllAsync();
     }
 
+    public async Task<PagedResultDto<Produto>> GetPaginatedAsync(int pagina, int tamanhoPagina)
+    {
+        var paginaValida = pagina <= 0 ? 1 : pagina;
+        var tamanhoValido = tamanhoPagina <= 0 ? 10 : (tamanhoPagina > 100 ? 100 : tamanhoPagina);
+
+        var (itens, totalRegistros) = await _produtoRepository.GetPaginatedAsync(paginaValida, tamanhoValido);
+
+        var totalPaginas = (int)Math.Ceiling(totalRegistros / (double)tamanhoValido);
+        var temPaginaAnterior = paginaValida > 1;
+        var temProximaPagina = paginaValida < totalPaginas;
+
+        return new PagedResultDto<Produto>(
+            itens,
+            paginaValida,
+            tamanhoValido,
+            totalRegistros,
+            totalPaginas,
+            temPaginaAnterior,
+            temProximaPagina
+        );
+    }
+
     public async Task<Produto?> GetByIdAsync(int id)
     {
         return await _produtoRepository.GetByIdAsync(id);
@@ -60,7 +82,7 @@ public class ProdutoService : IProdutoService
         var produtoExistente = await _produtoRepository.GetByIdAsync(id);
         if (produtoExistente == null)
         {
-            throw new KeyNotFoundException($"Produto com ID {id} não encontrado.");
+            throw new ProdutoNaoEncontradoException(id);
         }
 
         produtoExistente.Codigo = produtoAtualizado.Codigo;
@@ -82,7 +104,7 @@ public class ProdutoService : IProdutoService
         var produtoExistente = await _produtoRepository.GetByIdAsync(id);
         if (produtoExistente == null)
         {
-            throw new KeyNotFoundException($"Produto com ID {id} não encontrado.");
+            throw new ProdutoNaoEncontradoException(id);
         }
 
         await _produtoRepository.DeleteAsync(id);
@@ -103,7 +125,7 @@ public class ProdutoService : IProdutoService
         var produto = await _produtoRepository.GetByCodigoAsync(codigo);
         if (produto == null)
         {
-            throw new KeyNotFoundException($"Produto com código '{codigo}' não encontrado no estoque.");
+            throw new ProdutoNaoEncontradoException(codigo, true);
         }
 
         if (produto.Saldo < quantidade)
@@ -157,7 +179,7 @@ public class ProdutoService : IProdutoService
         var produto = await _produtoRepository.GetByCodigoAsync(codigo);
         if (produto == null)
         {
-            throw new KeyNotFoundException($"Produto com código '{codigo}' não encontrado no estoque.");
+            throw new ProdutoNaoEncontradoException(codigo, true);
         }
 
         produto.Saldo += quantidade;

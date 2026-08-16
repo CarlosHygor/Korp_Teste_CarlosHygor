@@ -6,6 +6,7 @@ namespace Estoque.API.Services;
 public interface IProdutoService
 {
     Task<IEnumerable<Produto>> GetAllAsync();
+    Task<PagedResultDto<Produto>> GetPaginatedAsync(int pagina, int tamanhoPagina);
     Task<Produto?> GetByIdAsync(int id);
     Task<Produto?> GetByCodigoAsync(string codigo);
     Task<Produto> CreateAsync(Produto produto);

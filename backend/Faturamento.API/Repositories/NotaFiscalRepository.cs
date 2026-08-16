@@ -22,6 +22,21 @@ public class NotaFiscalRepository : INotaFiscalRepository
                              .ToListAsync();
     }
 
+    public async Task<(IEnumerable<NotaFiscal> Itens, int TotalCount)> GetPaginatedAsync(int pagina, int tamanhoPagina)
+    {
+        var query = _context.NotasFiscais.AsNoTracking();
+        var totalCount = await query.CountAsync();
+
+        var itens = await query
+            .Include(n => n.Itens)
+            .OrderByDescending(n => n.DataCriacao)
+            .Skip((pagina - 1) * tamanhoPagina)
+            .Take(tamanhoPagina)
+            .ToListAsync();
+
+        return (itens, totalCount);
+    }
+
     public async Task<NotaFiscal?> GetByIdAsync(int id)
     {
         return await _context.NotasFiscais
