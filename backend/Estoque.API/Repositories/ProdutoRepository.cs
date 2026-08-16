@@ -20,6 +20,20 @@ public class ProdutoRepository : IProdutoRepository
                              .ToListAsync();
     }
 
+    public async Task<(IEnumerable<Produto> Itens, int TotalCount)> GetPaginatedAsync(int pagina, int tamanhoPagina)
+    {
+        var query = _context.Produtos.AsNoTracking();
+        var totalCount = await query.CountAsync();
+
+        var itens = await query
+            .OrderBy(p => p.Id)
+            .Skip((pagina - 1) * tamanhoPagina)
+            .Take(tamanhoPagina)
+            .ToListAsync();
+
+        return (itens, totalCount);
+    }
+
     public async Task<Produto?> GetByIdAsync(int id)
     {
         return await _context.Produtos

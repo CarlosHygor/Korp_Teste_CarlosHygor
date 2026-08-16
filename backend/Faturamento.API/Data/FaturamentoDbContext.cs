@@ -25,6 +25,7 @@ public class FaturamentoDbContext : DbContext
 
             // Numeração sequencial gerada automaticamente pelo banco (ValueGeneratedOnAdd / Identity / Sequence)
             entity.Property(n => n.Numeracao)
+                  .UseIdentityColumn()
                   .ValueGeneratedOnAdd();
 
             // Garantir que a numeração da nota fiscal seja única

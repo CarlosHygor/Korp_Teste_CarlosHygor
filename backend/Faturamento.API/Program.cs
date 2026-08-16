@@ -1,34 +1,29 @@
+using Faturamento.API.Configuration;
 using Faturamento.API.Data;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuração de CORS para liberar chamadas do frontend Angular (porta 4200)
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAngular", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
+// Configuração modular de serviços via Extension Methods (.NET 8 Clean Architecture)
+builder.Services
+    .AddCorsConfiguration()
+    .AddApplicationServices(builder.Configuration);
 
-// Configuração do DbContext do Entity Framework Core com PostgreSQL (faturamento_db)
-var connectionString = builder.Configuration.GetConnectionString("FaturamentoConnection");
-builder.Services.AddDbContext<FaturamentoDbContext>(options =>
-    options.UseNpgsql(connectionString));
-
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Garantir que a base de dados faturamento_db seja criada no PostgreSQL
+// Ativa o middleware global de exceções
+app.UseExceptionHandler();
+
+// Inicialização e Seed da base de dados PostgreSQL faturamento_db
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<FaturamentoDbContext>();
+    await dbContext.Database.EnsureDeletedAsync();
     await dbContext.Database.EnsureCreatedAsync();
+    await DbInitializer.SeedAsync(dbContext);
 }
 
 app.UseSwagger();
@@ -40,11 +35,12 @@ app.UseSwaggerUI(c =>
 
 app.UseCors("AllowAngular");
 
-app.MapGet("/api/faturamento/ping", () => new
-{
-    servico = "Faturamento.API",
-    status = "ok",
-    horario = DateTime.UtcNow
-});
+app.MapControllers();
+
+// Health Check nativo do ASP.NET Core (/health)
+app.MapHealthChecks("/health");
 
 app.Run();
+
+// Habilita a classe Program visível para testes de integração com WebApplicationFactory
+public partial class Program { }
