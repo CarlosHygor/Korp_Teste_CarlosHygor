@@ -218,7 +218,7 @@ public class NotaFiscalServiceTests
             new NotaFiscalBuilder().ComId(2).ComNumeracao(1002).ComStatus(StatusNotaFiscal.Fechada).Build()
         };
 
-        _notaFiscalRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10))
+        _notaFiscalRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, null))
                                  .ReturnsAsync((notas, 35));
 
         // Act
@@ -233,5 +233,27 @@ public class NotaFiscalServiceTests
         result.TotalPaginas.Should().Be(4);
         result.TemPaginaAnterior.Should().BeFalse();
         result.TemProximaPagina.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetPaginatedAsync_ComFiltroStatus_DeveRepassarFiltroParaRepositorio()
+    {
+        // Arrange
+        var notasAberta = new List<NotaFiscal>
+        {
+            new NotaFiscalBuilder().ComId(1).ComNumeracao(1001).ComStatus(StatusNotaFiscal.Aberta).Build()
+        };
+
+        _notaFiscalRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, StatusNotaFiscal.Aberta))
+                                 .ReturnsAsync((notasAberta, 1));
+
+        // Act
+        var result = await _service.GetPaginatedAsync(1, 10, StatusNotaFiscal.Aberta);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Itens.Count().Should().Be(1);
+        result.Itens.First().Status.Should().Be(StatusNotaFiscal.Aberta);
+        _notaFiscalRepositoryMock.Verify(r => r.GetPaginatedAsync(1, 10, StatusNotaFiscal.Aberta), Times.Once);
     }
 }

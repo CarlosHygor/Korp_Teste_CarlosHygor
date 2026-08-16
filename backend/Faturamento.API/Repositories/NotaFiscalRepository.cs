@@ -22,9 +22,15 @@ public class NotaFiscalRepository : INotaFiscalRepository
                              .ToListAsync();
     }
 
-    public async Task<(IEnumerable<NotaFiscal> Itens, int TotalCount)> GetPaginatedAsync(int pagina, int tamanhoPagina)
+    public async Task<(IEnumerable<NotaFiscal> Itens, int TotalCount)> GetPaginatedAsync(int pagina, int tamanhoPagina, StatusNotaFiscal? status = null)
     {
         var query = _context.NotasFiscais.AsNoTracking();
+
+        if (status.HasValue)
+        {
+            query = query.Where(n => n.Status == status.Value);
+        }
+
         var totalCount = await query.CountAsync();
 
         var itens = await query

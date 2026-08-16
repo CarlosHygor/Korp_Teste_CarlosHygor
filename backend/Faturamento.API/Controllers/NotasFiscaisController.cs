@@ -1,5 +1,6 @@
 using Faturamento.API.DTOs;
 using Faturamento.API.Mappers;
+using Faturamento.API.Models;
 using Faturamento.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,13 +19,13 @@ public class NotasFiscaisController : ControllerBase
     }
 
     /// <summary>
-    /// Retorna a lista paginada de todas as notas fiscais cadastradas.
+    /// Retorna a lista paginada de notas fiscais cadastradas, com filtro opcional por status.
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResultDto<NotaFiscalResponseDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] int pagina = 1, [FromQuery] int tamanhoPagina = 10)
+    public async Task<IActionResult> GetAll([FromQuery] int pagina = 1, [FromQuery] int tamanhoPagina = 10, [FromQuery] StatusNotaFiscal? status = null)
     {
-        var resultadoPaginado = await _notaFiscalService.GetPaginatedAsync(pagina, tamanhoPagina);
+        var resultadoPaginado = await _notaFiscalService.GetPaginatedAsync(pagina, tamanhoPagina, status);
 
         var dtoPaginado = new PagedResultDto<NotaFiscalResponseDto>(
             resultadoPaginado.Itens.ToResponseDtoList(),
