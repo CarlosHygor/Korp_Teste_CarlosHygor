@@ -33,4 +33,4 @@ jobs:
       run: dotnet build backend/Faturamento.API/Faturamento.API.csproj --no-restore --configuration Release
 
     - name: Run Automated Tests
-      run: dotnet test backend/Estoque.API.Tests/Estoque.API.Tests.csproj --no-build --configuration Release --verbosity normal
+      run: dotnet test backend/Estoque.API.Tests/Estoque.API.Tests.csproj --configuration Release --verbosity normal
