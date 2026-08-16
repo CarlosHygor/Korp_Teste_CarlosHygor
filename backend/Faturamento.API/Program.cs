@@ -37,16 +37,19 @@ builder.Services.AddScoped<IItemNotaFiscalRepository, ItemNotaFiscalRepository>(
 builder.Services.AddScoped<IItemNotaFiscalService, ItemNotaFiscalService>();
 builder.Services.AddScoped<INotaFiscalService, NotaFiscalService>();
 
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Garantir que a base de dados faturamento_db seja criada no PostgreSQL
+// Garantir que a base de dados faturamento_db seja recriada no PostgreSQL com o esquema correto e popular Seed Data
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<FaturamentoDbContext>();
+    await dbContext.Database.EnsureDeletedAsync();
     await dbContext.Database.EnsureCreatedAsync();
+    await DbInitializer.SeedAsync(dbContext);
 }
 
 app.UseSwagger();
@@ -58,6 +61,8 @@ app.UseSwaggerUI(c =>
 
 app.UseCors("AllowAngular");
 
+app.MapControllers();
+
 app.MapGet("/api/faturamento/ping", () => new
 {
     servico = "Faturamento.API",
@@ -66,3 +71,6 @@ app.MapGet("/api/faturamento/ping", () => new
 });
 
 app.Run();
+
+// Habilita a classe Program visível para testes de integração com WebApplicationFactory
+public partial class Program { }

@@ -25,12 +25,15 @@ jobs:
         dotnet restore backend/Estoque.API/Estoque.API.csproj
         dotnet restore backend/Faturamento.API/Faturamento.API.csproj
         dotnet restore backend/Estoque.API.Tests/Estoque.API.Tests.csproj
+        dotnet restore backend/Faturamento.API.Tests/Faturamento.API.Tests.csproj
 
-    - name: Build Estoque.API
-      run: dotnet build backend/Estoque.API/Estoque.API.csproj --no-restore --configuration Release
+    - name: Build Microservices
+      run: |
+        dotnet build backend/Estoque.API/Estoque.API.csproj --no-restore --configuration Release
+        dotnet build backend/Faturamento.API/Faturamento.API.csproj --no-restore --configuration Release
 
-    - name: Build Faturamento.API
-      run: dotnet build backend/Faturamento.API/Faturamento.API.csproj --no-restore --configuration Release
-
-    - name: Run Automated Tests
+    - name: Run Estoque.API Tests
       run: dotnet test backend/Estoque.API.Tests/Estoque.API.Tests.csproj --configuration Release --verbosity normal
+
+    - name: Run Faturamento.API Tests
+      run: dotnet test backend/Faturamento.API.Tests/Faturamento.API.Tests.csproj --configuration Release --verbosity normal

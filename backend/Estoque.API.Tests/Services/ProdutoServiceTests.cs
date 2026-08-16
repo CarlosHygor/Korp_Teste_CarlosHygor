@@ -1,3 +1,5 @@
+using Estoque.API.Data;
+using Estoque.API.DTOs;
 using Estoque.API.Exceptions;
 using Estoque.API.Models;
 using Estoque.API.Repositories;
@@ -7,17 +9,27 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
+using Microsoft.EntityFrameworkCore.Diagnostics;
+
 namespace Estoque.API.Tests.Services;
 
 public class ProdutoServiceTests
 {
     private readonly Mock<IProdutoRepository> _produtoRepositoryMock;
+    private readonly EstoqueDbContext _context;
     private readonly ProdutoService _produtoService;
 
     public ProdutoServiceTests()
     {
         _produtoRepositoryMock = new Mock<IProdutoRepository>();
-        _produtoService = new ProdutoService(_produtoRepositoryMock.Object);
+
+        var options = new DbContextOptionsBuilder<EstoqueDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .ConfigureWarnings(x => x.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .Options;
+
+        _context = new EstoqueDbContext(options);
+        _produtoService = new ProdutoService(_produtoRepositoryMock.Object, _context);
     }
 
     #region Testes de Abate de Estoque (AbaterEstoqueAsync)
@@ -88,6 +100,47 @@ public class ProdutoServiceTests
         // Assert
         await act.Should().ThrowAsync<ArgumentException>()
                  .WithMessage("*deve ser maior que zero*");
+    }
+
+    [Fact]
+    public async Task AbaterEstoqueLoteAsync_DeveAbaterTodosOsProdutos_QuandoTodosForemValidos()
+    {
+        // Arrange
+        var prod1 = new Produto { Id = 1, Codigo = "PROD-001", Descricao = "Teclado", Saldo = 10 };
+        var prod2 = new Produto { Id = 2, Codigo = "PROD-002", Descricao = "Mouse", Saldo = 5 };
+
+        _produtoRepositoryMock.Setup(r => r.GetByCodigoAsync("PROD-001")).ReturnsAsync(prod1);
+        _produtoRepositoryMock.Setup(r => r.GetByCodigoAsync("PROD-002")).ReturnsAsync(prod2);
+
+        var lote = new List<AbaterItemEstoqueDto>
+        {
+            new AbaterItemEstoqueDto("PROD-001", 2),
+            new AbaterItemEstoqueDto("PROD-002", 1)
+        };
+
+        // Act
+        await _produtoService.AbaterEstoqueLoteAsync(lote);
+
+        // Assert
+        prod1.Saldo.Should().Be(8);
+        prod2.Saldo.Should().Be(4);
+        _produtoRepositoryMock.Verify(r => r.UpdateAsync(prod1), Times.Once);
+        _produtoRepositoryMock.Verify(r => r.UpdateAsync(prod2), Times.Once);
+    }
+
+    [Fact]
+    public async Task EstornarEstoqueAsync_DeveRestabelecerSaldo_QuandoQuantidadeForValida()
+    {
+        // Arrange
+        var prod = new Produto { Id = 1, Codigo = "PROD-001", Descricao = "Teclado", Saldo = 8 };
+        _produtoRepositoryMock.Setup(r => r.GetByCodigoAsync("PROD-001")).ReturnsAsync(prod);
+
+        // Act
+        await _produtoService.EstornarEstoqueAsync("PROD-001", 2);
+
+        // Assert
+        prod.Saldo.Should().Be(10);
+        _produtoRepositoryMock.Verify(r => r.UpdateAsync(prod), Times.Once);
     }
 
     #endregion

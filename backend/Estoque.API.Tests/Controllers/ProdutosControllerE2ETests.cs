@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
+using Microsoft.EntityFrameworkCore.Diagnostics;
+
 namespace Estoque.API.Tests.Controllers;
 
 public class ProdutosControllerE2ETests : IClassFixture<WebApplicationFactory<Program>>
@@ -34,7 +36,8 @@ public class ProdutosControllerE2ETests : IClassFixture<WebApplicationFactory<Pr
                 // Adiciona o DbContext usando InMemoryDatabase com nome único por teste
                 services.AddDbContext<EstoqueDbContext>(options =>
                 {
-                    options.UseInMemoryDatabase("EstoqueApiE2ETestDb");
+                    options.UseInMemoryDatabase("EstoqueApiE2ETestDb")
+                           .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning));
                 });
             });
         });
@@ -100,5 +103,41 @@ public class ProdutosControllerE2ETests : IClassFixture<WebApplicationFactory<Pr
 
         // Assert (Valida bloqueio automático do ASP.NET Core via Model Validation)
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task AbaterEstoqueLote_QuandoTodosOsItensForemValidos_DeveRetornarStatus200OK()
+    {
+        // Arrange
+        await SeedDatabaseAsync();
+        var client = _factory.CreateClient();
+        var loteDto = new List<AbaterItemEstoqueDto>
+        {
+            new AbaterItemEstoqueDto("E2E-PROD-01", 2)
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/produtos/abater-lote", loteDto);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task EstornarEstoqueLote_QuandoRequisicaoForValida_DeveRetornarStatus200OK()
+    {
+        // Arrange
+        await SeedDatabaseAsync();
+        var client = _factory.CreateClient();
+        var loteEstorno = new List<AbaterItemEstoqueDto>
+        {
+            new AbaterItemEstoqueDto("E2E-PROD-01", 2)
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/produtos/estornar-lote", loteEstorno);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 }

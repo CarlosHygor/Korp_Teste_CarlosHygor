@@ -174,4 +174,58 @@ public class ProdutosController : ControllerBase
             return BadRequest(new { mensagem = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Abate o saldo de múltiplos produtos em lote com garantia de transação atômica (Tudo ou Nada).
+    /// </summary>
+    [HttpPost("abater-lote")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> AbaterEstoqueLote([FromBody] List<AbaterItemEstoqueDto> itens)
+    {
+        try
+        {
+            await _produtoService.AbaterEstoqueLoteAsync(itens);
+            return Ok(new { mensagem = $"Abate em lote de {itens?.Count ?? 0} produto(s) realizado com sucesso no estoque." });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { mensagem = ex.Message });
+        }
+        catch (EstoqueInsuficienteException ex)
+        {
+            return UnprocessableEntity(new
+            {
+                mensagem = ex.Message,
+                codigoProduto = ex.CodigoProduto,
+                saldoAtual = ex.SaldoAtual,
+                quantidadeSolicitada = ex.QuantidadeSolicitada
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Reverte/Estorna o saldo de múltiplos produtos em lote (Ação Compensatória em caso de falha no Faturamento).
+    /// </summary>
+    [HttpPost("estornar-lote")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> EstornarEstoqueLote([FromBody] List<AbaterItemEstoqueDto> itens)
+    {
+        try
+        {
+            await _produtoService.EstornarEstoqueLoteAsync(itens);
+            return Ok(new { mensagem = $"Estorno de estoque em lote de {itens?.Count ?? 0} produto(s) realizado com sucesso." });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
+    }
 }

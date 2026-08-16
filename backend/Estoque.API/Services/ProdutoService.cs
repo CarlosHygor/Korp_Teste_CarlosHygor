@@ -1,3 +1,5 @@
+using Estoque.API.Data;
+using Estoque.API.DTOs;
 using Estoque.API.Exceptions;
 using Estoque.API.Models;
 using Estoque.API.Repositories;
@@ -8,10 +10,12 @@ namespace Estoque.API.Services;
 public class ProdutoService : IProdutoService
 {
     private readonly IProdutoRepository _produtoRepository;
+    private readonly EstoqueDbContext _context;
 
-    public ProdutoService(IProdutoRepository produtoRepository)
+    public ProdutoService(IProdutoRepository produtoRepository, EstoqueDbContext context)
     {
         _produtoRepository = produtoRepository;
+        _context = context;
     }
 
     public async Task<IEnumerable<Produto>> GetAllAsync()
@@ -38,9 +42,12 @@ public class ProdutoService : IProdutoService
     {
         ValidarDadosProduto(produto);
 
-        try {
+        try
+        {
             return await _produtoRepository.AddAsync(produto);
-        } catch (DbUpdateException) {
+        }
+        catch (DbUpdateException)
+        {
             // Captura a violação de índice único do PostgreSQL
             throw new CodigoProdutoDuplicadoException(produto.Codigo);
         }
@@ -106,6 +113,82 @@ public class ProdutoService : IProdutoService
 
         produto.Saldo -= quantidade;
         await _produtoRepository.UpdateAsync(produto);
+    }
+
+    public async Task AbaterEstoqueLoteAsync(IEnumerable<AbaterItemEstoqueDto> itens)
+    {
+        var listaItens = itens?.ToList() ?? new List<AbaterItemEstoqueDto>();
+        if (!listaItens.Any())
+        {
+            throw new ArgumentException("A lista de itens para abate de estoque não pode estar vazia.");
+        }
+
+        // Reutiliza a lógica de recomposição individual e garante a atomicidade das operações
+        using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            foreach (var item in listaItens)
+            {
+                await AbaterEstoqueAsync(item.CodigoProduto, item.Quantidade);
+            }
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
+    public async Task EstornarEstoqueAsync(string codigo, int quantidade)
+    {
+        if (string.IsNullOrWhiteSpace(codigo))
+        {
+            throw new ArgumentException("O código do produto deve ser informado.", nameof(codigo));
+        }
+
+        if (quantidade <= 0)
+        {
+            throw new ArgumentException("A quantidade a estornar deve ser maior que zero.", nameof(quantidade));
+        }
+
+        var produto = await _produtoRepository.GetByCodigoAsync(codigo);
+        if (produto == null)
+        {
+            throw new KeyNotFoundException($"Produto com código '{codigo}' não encontrado no estoque.");
+        }
+
+        produto.Saldo += quantidade;
+        await _produtoRepository.UpdateAsync(produto);
+    }
+
+    public async Task EstornarEstoqueLoteAsync(IEnumerable<AbaterItemEstoqueDto> itens)
+    {
+        var listaItens = itens?.ToList() ?? new List<AbaterItemEstoqueDto>();
+        if (!listaItens.Any())
+        {
+            return;
+        }
+
+        // Reutiliza a lógica de recomposição individual e garante a atomicidade das operações
+        using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            foreach (var item in listaItens)
+            {
+                await EstornarEstoqueAsync(item.CodigoProduto, item.Quantidade);
+            }
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     private static void ValidarDadosProduto(Produto produto)

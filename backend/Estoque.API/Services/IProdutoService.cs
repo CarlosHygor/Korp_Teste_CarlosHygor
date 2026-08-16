@@ -1,3 +1,4 @@
+using Estoque.API.DTOs;
 using Estoque.API.Models;
 
 namespace Estoque.API.Services;
@@ -11,4 +12,7 @@ public interface IProdutoService
     Task UpdateAsync(int id, Produto produto);
     Task DeleteAsync(int id);
     Task AbaterEstoqueAsync(string codigo, int quantidade);
+    Task AbaterEstoqueLoteAsync(IEnumerable<AbaterItemEstoqueDto> itens);
+    Task EstornarEstoqueAsync(string codigo, int quantidade);
+    Task EstornarEstoqueLoteAsync(IEnumerable<AbaterItemEstoqueDto> itens);
 }

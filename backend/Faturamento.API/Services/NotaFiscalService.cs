@@ -1,3 +1,5 @@
+using Faturamento.API.Clients;
+using Faturamento.API.Clients.DTOs;
 using Faturamento.API.Models;
 using Faturamento.API.Repositories;
 
@@ -6,12 +8,12 @@ namespace Faturamento.API.Services;
 public class NotaFiscalService : INotaFiscalService
 {
     private readonly INotaFiscalRepository _notaFiscalRepository;
-    private readonly IItemNotaFiscalService _itemNotaFiscalService;
+    private readonly IEstoqueClient _estoqueClient;
 
-    public NotaFiscalService(INotaFiscalRepository notaFiscalRepository, IItemNotaFiscalService itemNotaFiscalService)
+    public NotaFiscalService(INotaFiscalRepository notaFiscalRepository, IEstoqueClient estoqueClient)
     {
         _notaFiscalRepository = notaFiscalRepository;
-        _itemNotaFiscalService = itemNotaFiscalService;
+        _estoqueClient = estoqueClient;
     }
 
     public async Task<IEnumerable<NotaFiscal>> GetAllAsync()
@@ -22,6 +24,11 @@ public class NotaFiscalService : INotaFiscalService
     public async Task<NotaFiscal?> GetByIdAsync(int id)
     {
         return await _notaFiscalRepository.GetByIdAsync(id);
+    }
+
+    public async Task<NotaFiscal?> GetByNumeracaoAsync(long numeracao)
+    {
+        return await _notaFiscalRepository.GetByNumeracaoAsync(numeracao);
     }
 
     public async Task<NotaFiscal> CreateAsync(NotaFiscal notaFiscal)
@@ -70,15 +77,26 @@ public class NotaFiscalService : INotaFiscalService
             throw new InvalidOperationException($"A Nota Fiscal nº {notaFiscal.Numeracao} não possui itens para impressão.");
         }
 
-        // Percorre a Lista e delega a responsabilidade de abater cada item para o ItemNotaFiscalService 
-        foreach (var item in notaFiscal.Itens)
-        {
-            await _itemNotaFiscalService.AbaterEstoqueAsync(item);
-        }
+        // Mapeia os itens da Nota Fiscal para a requisição de lote do Estoque.API
+        var itensAbate = notaFiscal.Itens
+            .Select(i => new ItemAbateEstoqueDto(i.CodigoProduto, i.Quantidade))
+            .ToList();
 
-        // Atualiza status da nota para Fechada após confirmação da baixa de estoque dos itens
-        notaFiscal.Status = StatusNotaFiscal.Fechada;
-        await _notaFiscalRepository.UpdateAsync(notaFiscal);
+        // 1. Envia a requisição em lote atômica para o Estoque.API
+        await _estoqueClient.AbaterEstoqueLoteAsync(itensAbate);
+
+        try
+        {
+            // 2. Atualiza status da nota para Fechada após confirmação atômica da baixa de estoque do lote
+            notaFiscal.Status = StatusNotaFiscal.Fechada;
+            await _notaFiscalRepository.UpdateAsync(notaFiscal);
+        }
+        catch (Exception ex)
+        {
+            // 3. Ação Compensatória: Se a gravação no banco do Faturamento falhar, estorna a baixa de estoque no Estoque.API
+            await _estoqueClient.EstornarEstoqueLoteAsync(itensAbate);
+            throw new InvalidOperationException($"Falha ao atualizar o status da Nota Fiscal no banco de dados. O abate de estoque foi revertido com sucesso.", ex);
+        }
 
         return notaFiscal;
     }
