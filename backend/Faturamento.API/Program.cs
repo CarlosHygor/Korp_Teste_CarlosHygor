@@ -1,4 +1,7 @@
+using Faturamento.API.Clients;
 using Faturamento.API.Data;
+using Faturamento.API.Repositories;
+using Faturamento.API.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +21,21 @@ builder.Services.AddCors(options =>
 var connectionString = builder.Configuration.GetConnectionString("FaturamentoConnection");
 builder.Services.AddDbContext<FaturamentoDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+// Cliente HTTP para integração com Estoque.API (WebClient / FeignClient no Spring)
+builder.Services.AddHttpClient<IEstoqueClient, EstoqueClient>(client =>
+{
+    var estoqueUrl = builder.Configuration["Services:EstoqueUrl"] ?? "http://localhost:5000";
+    client.BaseAddress = new Uri(estoqueUrl.EndsWith("/") ? estoqueUrl : $"{estoqueUrl}/");
+});
+
+// Injeção de Dependência dos Repositórios (Scoped ~ @RequestScope / Spring Bean Scoped)
+builder.Services.AddScoped<INotaFiscalRepository, NotaFiscalRepository>();
+builder.Services.AddScoped<IItemNotaFiscalRepository, ItemNotaFiscalRepository>();
+
+// Injeção de Dependência da Camada de Serviços
+builder.Services.AddScoped<IItemNotaFiscalService, ItemNotaFiscalService>();
+builder.Services.AddScoped<INotaFiscalService, NotaFiscalService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
