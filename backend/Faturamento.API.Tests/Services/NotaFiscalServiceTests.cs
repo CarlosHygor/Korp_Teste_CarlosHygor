@@ -218,7 +218,7 @@ public class NotaFiscalServiceTests
             new NotaFiscalBuilder().ComId(2).ComNumeracao(1002).ComStatus(StatusNotaFiscal.Fechada).Build()
         };
 
-        _notaFiscalRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, null))
+        _notaFiscalRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, null, null))
                                  .ReturnsAsync((notas, 35));
 
         // Act
@@ -244,7 +244,7 @@ public class NotaFiscalServiceTests
             new NotaFiscalBuilder().ComId(1).ComNumeracao(1001).ComStatus(StatusNotaFiscal.Aberta).Build()
         };
 
-        _notaFiscalRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, StatusNotaFiscal.Aberta))
+        _notaFiscalRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, StatusNotaFiscal.Aberta, null))
                                  .ReturnsAsync((notasAberta, 1));
 
         // Act
@@ -254,6 +254,27 @@ public class NotaFiscalServiceTests
         result.Should().NotBeNull();
         result.Itens.Count().Should().Be(1);
         result.Itens.First().Status.Should().Be(StatusNotaFiscal.Aberta);
-        _notaFiscalRepositoryMock.Verify(r => r.GetPaginatedAsync(1, 10, StatusNotaFiscal.Aberta), Times.Once);
+        _notaFiscalRepositoryMock.Verify(r => r.GetPaginatedAsync(1, 10, StatusNotaFiscal.Aberta, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPaginatedAsync_ComOrdenacao_DeveRepassarOrdenacaoParaRepositorio()
+    {
+        // Arrange
+        var notas = new List<NotaFiscal>
+        {
+            new NotaFiscalBuilder().ComId(1).ComNumeracao(1001).Build()
+        };
+
+        _notaFiscalRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, null, "itens_desc"))
+                                 .ReturnsAsync((notas, 1));
+
+        // Act
+        var result = await _service.GetPaginatedAsync(1, 10, null, "itens_desc");
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Itens.Should().HaveCount(1);
+        _notaFiscalRepositoryMock.Verify(r => r.GetPaginatedAsync(1, 10, null, "itens_desc"), Times.Once);
     }
 }

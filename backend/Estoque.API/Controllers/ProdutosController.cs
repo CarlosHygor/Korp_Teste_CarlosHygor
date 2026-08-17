@@ -24,9 +24,9 @@ public class ProdutosController : ControllerBase
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResultDto<ProdutoResponseDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] int pagina = 1, [FromQuery] int tamanhoPagina = 10, [FromQuery] string? ordenarPorSaldo = null)
+    public async Task<IActionResult> GetAll([FromQuery] int pagina = 1, [FromQuery] int tamanhoPagina = 10, [FromQuery] string? ordenarPorSaldo = null, [FromQuery] string? busca = null)
     {
-        var resultadoPaginado = await _produtoService.GetPaginatedAsync(pagina, tamanhoPagina, ordenarPorSaldo);
+        var resultadoPaginado = await _produtoService.GetPaginatedAsync(pagina, tamanhoPagina, ordenarPorSaldo, busca);
 
         var dtoPaginado = new PagedResultDto<ProdutoResponseDto>(
             resultadoPaginado.Itens.ToResponseDtoList(),

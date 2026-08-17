@@ -1,6 +1,8 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ProdutoService } from '../../../../services/produto.service';
 import { Produto } from '../../../../models/produto.model';
 import { PagedResult } from '../../../../models/paged-result.model';
@@ -49,6 +51,20 @@ import { SuccessModalComponent, MensagemSucesso } from '../../../../shared/compo
       </div>
 
       <div class="page-actions">
+        <div class="search-box">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input 
+            type="text" 
+            [ngModel]="termoBusca" 
+            (ngModelChange)="aoDigitarBusca($event)" 
+            placeholder="Buscar código ou descrição..." 
+            class="input-search"
+          />
+        </div>
+
         <div class="sort-selector">
           <label for="sortSaldo">Ordenar Saldo:</label>
           <select id="sortSaldo" [ngModel]="ordenarPorSaldo" (ngModelChange)="alterarOrdenacaoSaldo($event)" class="select-sort">
@@ -78,7 +94,7 @@ import { SuccessModalComponent, MensagemSucesso } from '../../../../shared/compo
             <tr>
               <th>Código</th>
               <th>Descrição do Produto</th>
-              <th>Saldo em Estoque</th>
+              <th class="text-right">Saldo em Estoque</th>
               <th>Status do Saldo</th>
               <th class="text-right">Ações</th>
             </tr>
@@ -87,27 +103,29 @@ import { SuccessModalComponent, MensagemSucesso } from '../../../../shared/compo
             <tr *ngFor="let p of pagedResult.itens">
               <td class="td-codigo"><code>{{ p.codigo }}</code></td>
               <td class="td-descricao">{{ p.descricao }}</td>
-              <td class="td-saldo"><strong>{{ p.saldo }}</strong> un</td>
+              <td class="td-saldo text-right"><strong>{{ p.saldo }}</strong> un</td>
               <td>
                 <span class="stock-badge" [ngClass]="obterClasseStatusSaldo(p.saldo)">
                   <span class="dot"></span>
                   {{ obterTextoStatusSaldo(p.saldo) }}
                 </span>
               </td>
-              <td class="text-right actions-cell">
-                <button class="btn-action btn-edit" title="Editar Produto" (click)="abrirModalEdicao(p)">
-                  <svg class="action-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
-                  </svg>
-                  <span>Editar</span>
-                </button>
-                <button class="btn-action btn-delete" title="Excluir Produto" (click)="confirmarExclusao(p)">
-                  <svg class="action-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                  </svg>
-                  <span>Excluir</span>
-                </button>
+              <td class="text-right">
+                <div class="actions-cell">
+                  <button class="btn-action btn-edit" title="Editar Produto" (click)="abrirModalEdicao(p)">
+                    <svg class="action-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                    </svg>
+                    <span>Editar</span>
+                  </button>
+                  <button class="btn-action btn-delete" title="Excluir Produto" (click)="confirmarExclusao(p)">
+                    <svg class="action-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>Excluir</span>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -164,6 +182,38 @@ import { SuccessModalComponent, MensagemSucesso } from '../../../../shared/compo
       align-items: center;
       gap: 0.875rem;
       flex-wrap: wrap;
+    }
+
+    .search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 0.75rem;
+      width: 1rem;
+      height: 1rem;
+      color: #94a3b8;
+      pointer-events: none;
+    }
+
+    .input-search {
+      background: #0f1c23;
+      color: #f8fafc;
+      border: 1px solid #294656;
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+      font-size: 0.875rem;
+      outline: none;
+      width: 250px;
+      transition: all 0.15s;
+    }
+
+    .input-search:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
     }
 
     .sort-selector {
@@ -454,6 +504,8 @@ export class ProdutoListComponent implements OnInit {
   mensagemSucessoModal: MensagemSucesso | null = null;
 
   ordenarPorSaldo: 'asc' | 'desc' | null = null;
+  termoBusca: string = '';
+  private readonly termoBuscaSubject = new Subject<string>();
 
   constructor(
     private readonly produtoService: ProdutoService,
@@ -462,13 +514,26 @@ export class ProdutoListComponent implements OnInit {
 
   ngOnInit(): void {
     this.carregarProdutos();
+
+    this.termoBuscaSubject.pipe(
+      debounceTime(350),
+      distinctUntilChanged()
+    ).subscribe((termo) => {
+      this.termoBusca = termo;
+      this.paginaAtual = 1;
+      this.carregarProdutos();
+    });
+  }
+
+  aoDigitarBusca(termo: string): void {
+    this.termoBuscaSubject.next(termo);
   }
 
   carregarProdutos(): void {
     this.carregando = true;
     this.cdr.markForCheck();
 
-    this.produtoService.getPaginated(this.paginaAtual, this.tamanhoPagina, this.ordenarPorSaldo).subscribe({
+    this.produtoService.getPaginated(this.paginaAtual, this.tamanhoPagina, this.ordenarPorSaldo, this.termoBusca).subscribe({
       next: (resultado) => {
         this.pagedResult = resultado;
         this.carregando = false;

@@ -20,9 +20,16 @@ public class ProdutoRepository : IProdutoRepository
                              .ToListAsync();
     }
 
-    public async Task<(IEnumerable<Produto> Itens, int TotalCount)> GetPaginatedAsync(int pagina, int tamanhoPagina, string? ordenarPorSaldo = null)
+    public async Task<(IEnumerable<Produto> Itens, int TotalCount)> GetPaginatedAsync(int pagina, int tamanhoPagina, string? ordenarPorSaldo = null, string? busca = null)
     {
         var query = _context.Produtos.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(busca))
+        {
+            var termo = busca.Trim().ToLower();
+            query = query.Where(p => p.Codigo.ToLower().Contains(termo) || p.Descricao.ToLower().Contains(termo));
+        }
+
         var totalCount = await query.CountAsync();
 
         if (ordenarPorSaldo?.ToLower() == "asc")

@@ -23,12 +23,12 @@ public class NotaFiscalService : INotaFiscalService
         return await _notaFiscalRepository.GetAllAsync();
     }
 
-    public async Task<PagedResultDto<NotaFiscal>> GetPaginatedAsync(int pagina, int tamanhoPagina, StatusNotaFiscal? status = null)
+    public async Task<PagedResultDto<NotaFiscal>> GetPaginatedAsync(int pagina, int tamanhoPagina, StatusNotaFiscal? status = null, string? ordenacao = null)
     {
         var paginaValida = pagina <= 0 ? 1 : pagina;
         var tamanhoValido = tamanhoPagina <= 0 ? 10 : (tamanhoPagina > 100 ? 100 : tamanhoPagina);
 
-        var (itens, totalRegistros) = await _notaFiscalRepository.GetPaginatedAsync(paginaValida, tamanhoValido, status);
+        var (itens, totalRegistros) = await _notaFiscalRepository.GetPaginatedAsync(paginaValida, tamanhoValido, status, ordenacao);
 
         var totalPaginas = (int)Math.Ceiling(totalRegistros / (double)tamanhoValido);
         var temPaginaAnterior = paginaValida > 1;

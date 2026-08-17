@@ -8,7 +8,7 @@
 
 > **Projeto de Desafio Técnico / Portfólio de Engenharia de Software**  
 > **Desenvolvedor:** Carlos Hygor  
-> **Objetivo:** Solução distribuída em **Arquitetura de Microsserviços** desacoplada para controle de estoque e faturamento de notas fiscais, combinando **ASP.NET Core 8**, **Entity Framework Core**, **PostgreSQL**, **Angular 22** e uma suíte rigorosa de **Testes Automatizados (37 testes aprovados)**.
+> **Objetivo:** Solução distribuída em **Arquitetura de Microsserviços** desacoplada para controle de estoque e faturamento de notas fiscais, combinando **ASP.NET Core 8**, **Entity Framework Core**, **PostgreSQL**, **Angular 22** e uma suíte rigorosa de **Testes Automatizados (41 testes aprovados)**.
 
 ---
 
@@ -77,15 +77,30 @@ Responsável pela criação de Notas Fiscais com numeração sequencial automát
 
 ---
 
-### 3. 💻 Frontend Web (`frontend`) — Status: ⏳ Em Desenvolvimento
+### 3. 💻 Frontend Web (`frontend`) — Status: ✅ Concluído
 
-Interface SPA em **Angular 22** para interação do usuário com os microsserviços.
+Interface SPA moderna em **Angular 22** projetada para alta produtividade operacional (PDV/ERP), integrada diretamente aos dois microsserviços C# .NET 8.
 
-#### ⚙️ Recursos Mapeados:
-* Arquitetura de **Standalone Components** e **Angular Signals** para reatividade simples e performática.
-* Telas de cadastro e listagem paginada de produtos.
-* Emissão de Notas Fiscais com múltiplos itens.
-* Botão intuitivo de impressão com indicador de processamento (*loading*) e tratamento de mensagens de erro amigáveis vindas das APIs.
+#### 💡 Destaques de Engenharia & Arquitetura Frontend:
+* **Arquitetura de Standalone Components**: Estrutura modular limpa sem `NgModule`, utilizando componentes isolados e consumo reativo de APIs REST via RxJS (`HttpClient`, `pipe`, `finalize`).
+* **Design System KORP ERP (Theme)**: Layout responsivo em modo escuro (`#12222a` / `#1a2f3a`), badge em tempo real do status das APIs C#, componentes de loading overlay bloqueante e acessibilidade.
+* **Módulo de Estoque (Produtos)**:
+  - Tabela paginada com seletor de itens por página (5, 10, 20).
+  - Ordenação dinâmica por saldo (Maior / Menor Saldo Primeiro).
+  - Formulário reativo de cadastro e edição de produtos.
+  - Confirmação de exclusão com tratamento de conflito de código duplicado (HTTP 409).
+* **Módulo de Faturamento (Notas Fiscais)**:
+  - Tabela paginada de notas fiscais com numeração sequencial formatada (`<code>#0001</code>`).
+  - Filtro por abas de status (`Todas`, `Abertas`, `Fechadas`).
+  - Accordion expansível por linha para visualização dos itens vinculados à nota fiscal.
+  - Modal de cadastro reativo com **`FormArray`** dinâmico para adição e remoção de múltiplos produtos.
+  - **UX Defensiva**: Seletor que desabilita itens sem estoque (`saldo == 0`), card rico de detalhes do produto selecionado (código, descrição completa e saldo) e trava no botão de adição até preenchimento do item atual.
+* **Tratamento de Erros & Resiliência Distribuída no Client**:
+  - **HTTP 200 OK**: Transição da nota para `Fechada` + baixa no estoque físico + recarga automática dos saldos.
+  - **HTTP 503 Service Unavailable (Estoque Offline)**: Captura e exibição de modal de **Aviso de Resiliência (⚡)** informando que a nota permaneceu **ABERTA** para tentar novamente assim que o serviço estabilizar.
+  - **HTTP 422 Unprocessable Entity (Saldo Insuficiente)**: Exibição de modal com tabela explicativa do código do produto, saldo no banco e quantidade solicitada.
+* **Suíte de Testes Unitários Frontend (Vitest)**:
+  - Testes cobrindo componentes, paginação, formatação de dados e filtros por status.
 
 ---
 
@@ -108,7 +123,7 @@ A aplicação segue a **Cadeia Hierárquica de Configurações do .NET 8**:
 
 ---
 
-## 🧪 Como Executar a Suíte Completa de Testes (37 Testes)
+## 🧪 Como Executar a Suíte Completa de Testes (41 Testes)
 
 Para executar a suíte de testes de ambos os microsserviços:
 
@@ -118,9 +133,9 @@ dotnet test backend/Estoque.API.Tests/Estoque.API.Tests.csproj && dotnet test ba
 
 **Resultado esperado:**
 ```text
-Passed!  - Failed: 0, Passed: 21, Skipped: 0, Total: 21 (Estoque.API.Tests.dll)
-Passed!  - Failed: 0, Passed: 16, Skipped: 0, Total: 16 (Faturamento.API.Tests.dll)
-Total: 37 testes aprovados!
+Passed!  - Failed: 0, Passed: 23, Skipped: 0, Total: 23 (Estoque.API.Tests.dll)
+Passed!  - Failed: 0, Passed: 18, Skipped: 0, Total: 18 (Faturamento.API.Tests.dll)
+Total: 41 testes aprovados!
 ```
 
 ---
@@ -155,7 +170,7 @@ dotnet run --project backend/Faturamento.API/Faturamento.API.csproj
 | Método | Endpoint | Descrição | Status HTTP |
 | :--- | :--- | :--- | :--- |
 | **`GET`** | `/health` | Health Check nativo de disponibilidade | `200 OK` |
-| **`GET`** | `/api/produtos` | Lista paginada de produtos | `200 OK` |
+| **`GET`** | `/api/produtos` | Lista paginada com busca por código/descrição (`busca`) e ordenação por saldo (`ordenarPorSaldo`) | `200 OK` |
 | **`GET`** | `/api/produtos/{id}` | Detalhes do produto por ID | `200 OK`, `404 NotFound` |
 | **`GET`** | `/api/produtos/codigo/{codigo}` | Detalhes do produto por Código | `200 OK`, `404 NotFound` |
 | **`POST`** | `/api/produtos` | Cadastra um novo produto | `201 Created`, `400 BadRequest`, `409 Conflict` |
@@ -170,7 +185,7 @@ dotnet run --project backend/Faturamento.API/Faturamento.API.csproj
 | Método | Endpoint | Descrição | Status HTTP |
 | :--- | :--- | :--- | :--- |
 | **`GET`** | `/health` | Health Check nativo de disponibilidade | `200 OK` |
-| **`GET`** | `/api/notasfiscais` | Lista paginada de Notas Fiscais | `200 OK` |
+| **`GET`** | `/api/notasfiscais` | Lista paginada com filtro por `status` e ordenação por data ou qtd de itens (`ordenacao`) | `200 OK` |
 | **`GET`** | `/api/notasfiscais/{id}` | Detalhes da Nota Fiscal por ID | `200 OK`, `404 NotFound` |
 | **`GET`** | `/api/notasfiscais/numeracao/{num}` | Busca Nota Fiscal por numeração sequencial | `200 OK`, `404 NotFound` |
 | **`POST`** | `/api/notasfiscais` | Cria Nota Fiscal com status inicial `Aberta` | `201 Created`, `400 BadRequest` |

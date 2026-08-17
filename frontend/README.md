@@ -1,59 +1,82 @@
-# Frontend
+# 💻 KORP ERP Frontend (Angular 22 SPA)
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.4.
+Interface web SPA desenvolvida em **Angular 22** com **Standalone Components**, **Reactive Forms**, **RxJS** e **Vitest** para interação com os microsserviços de **Estoque** (`Estoque.API`) e **Faturamento** (`Faturamento.API`).
 
-## Development server
+---
 
-To start a local development server, run:
+## 🏛️ Estrutura de Arquitetura & Componentes
 
-```bash
-ng serve
+```text
+src/app/
+├── core/
+├── models/
+│   ├── produto.model.ts          # Interfaces DTOs de Produtos
+│   ├── nota-fiscal.model.ts      # Interfaces DTOs de Notas Fiscais e Itens
+│   └── paged-result.model.ts     # Interface genérica PagedResult<T>
+├── services/
+│   ├── produto.service.ts        # Integração HTTP com Estoque.API (Porta 5000)
+│   └── nota-fiscal.service.ts    # Integração HTTP com Faturamento.API (Porta 5002)
+├── features/
+│   ├── produtos/
+│   │   └── componentes/
+│   │       ├── produto-list/         # Tabela paginada + busca + ordenação por saldo
+│   │       └── produto-form-modal/   # Modal reativo de cadastro e edição
+│   └── notas-fiscais/
+│       └── componentes/
+│           ├── nota-list/            # Tabela de NFs + filtros de status + impressão resiliente
+│           └── nota-form-modal/      # FormArray dinâmico para múltiplos produtos
+└── shared/
+    └── components/
+        ├── loading-spinner/      # Spinner overlay e inline bloqueante
+        ├── status-badge/         # Badge colorido (Aberta vs Fechada)
+        ├── error-modal/          # Modal rico para HTTP 422 e Resiliência HTTP 503
+        └── success-modal/        # Modal de feedback de operação concluída
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+---
 
-## Code scaffolding
+## 🚀 Como Executar o Frontend
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
+### 1. Instalar Dependências
 ```bash
-ng generate component component-name
+npm install
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### 2. Rodar Servidor de Desenvolvimento Local
+```bash
+npm start
+```
+Acesse `http://localhost:4200` no navegador. A aplicação recarrega automaticamente ao salvar alterações nos arquivos.
+
+---
+
+## 🧪 Suíte de Testes Unitários (Vitest)
+
+Para executar os testes unitários da interface:
 
 ```bash
-ng generate --help
+npm test
 ```
 
-## Building
+Os testes cobrem a inicialização dos componentes, carregamento paginado, formatação de códigos, ordenações e manipulação das abas de filtro por status.
 
-To build the project run:
+---
+
+## 📦 Build de Produção
+
+Para compilar o projeto para produção:
 
 ```bash
-ng build
+npm run build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Os artefatos compilados e otimizados serão gerados no diretório `dist/frontend`.
 
-## Running unit tests
+---
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## 🛡️ Tratamento de Erros e Resiliência HTTP no Client
 
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- **HTTP 200 OK**: Transita a nota fiscal para `Fechada` em tempo real na UI, exibe o modal de sucesso e recarrega os saldos de estoque.
+- **HTTP 503 Service Unavailable**: Exibe modal rico de **Aviso de Resiliência (⚡)** informando que o serviço de Estoque está indisponível e que a Nota permaneceu **ABERTA** para nova tentativa.
+- **HTTP 422 Unprocessable Entity**: Exibe detalhes ricos de saldo em estoque disponível vs quantidade solicitada.
+- **HTTP 409 Conflict**: Exibe aviso de duplicidade de código de produto.

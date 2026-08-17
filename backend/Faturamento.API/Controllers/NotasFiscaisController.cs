@@ -23,9 +23,9 @@ public class NotasFiscaisController : ControllerBase
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResultDto<NotaFiscalResponseDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] int pagina = 1, [FromQuery] int tamanhoPagina = 10, [FromQuery] StatusNotaFiscal? status = null)
+    public async Task<IActionResult> GetAll([FromQuery] int pagina = 1, [FromQuery] int tamanhoPagina = 10, [FromQuery] StatusNotaFiscal? status = null, [FromQuery] string? ordenacao = null)
     {
-        var resultadoPaginado = await _notaFiscalService.GetPaginatedAsync(pagina, tamanhoPagina, status);
+        var resultadoPaginado = await _notaFiscalService.GetPaginatedAsync(pagina, tamanhoPagina, status, ordenacao);
 
         var dtoPaginado = new PagedResultDto<NotaFiscalResponseDto>(
             resultadoPaginado.Itens.ToResponseDtoList(),
