@@ -48,7 +48,7 @@ describe('ProdutoListComponent', () => {
   });
 
   it('deve carregar produtos paginados ao inicializar', () => {
-    expect(produtoServiceMock.getPaginated).toHaveBeenCalledWith(1, 10);
+    expect(produtoServiceMock.getPaginated).toHaveBeenCalledWith(1, 10, null, '');
     expect(component.pagedResult).toEqual(mockPagedResult);
   });
 

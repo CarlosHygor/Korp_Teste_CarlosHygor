@@ -27,11 +27,21 @@ src/app/
 │           └── nota-form-modal/      # FormArray dinâmico para múltiplos produtos
 └── shared/
     └── components/
+        ├── accessibility-bar/    # Controle de escala de fonte (A-, A+) e Alto Contraste
         ├── loading-spinner/      # Spinner overlay e inline bloqueante
         ├── status-badge/         # Badge colorido (Aberta vs Fechada)
         ├── error-modal/          # Modal rico para HTTP 422 e Resiliência HTTP 503
         └── success-modal/        # Modal de feedback de operação concluída
 ```
+
+---
+
+## ♿ Recursos de Acessibilidade Web (WCAG 2.2 Level AAA)
+
+- **🤟 VLibras (Widget Oficial)**: Integração com a Suíte VLibras do Governo Federal para tradução de conteúdos em LIBRAS.
+- **🔤 Redimensionamento de Fonte (`A-`, `A`, `A+`)**: Controle da escala de fonte no `html` de 85% a 130%.
+- **👁️ Modo Alto Contraste**: Alternância instantânea via CSS Variables (`:root` -> `.high-contrast`) com fundo preto absoluto (`#000000`) e elementos em amarelo de alto contraste (`#ffff00`).
+- **⌨️ Anéis de Foco de Teclado**: Suporte completo a navegação por `Tab` e `Shift+Tab` com estilo de foco `:focus-visible`.
 
 ---
 

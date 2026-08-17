@@ -1,9 +1,10 @@
-import { ComponentFixture, TestBed } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { NotaFiscalListComponent } from './nota-list';
 import { NotaFiscalService } from '../../../../services/nota-fiscal.service';
+import { ProdutoService } from '../../../../services/produto.service';
 import { PagedResult } from '../../../../models/paged-result.model';
 import { NotaFiscal } from '../../../../models/nota-fiscal.model';
 
@@ -11,6 +12,7 @@ describe('NotaFiscalListComponent', () => {
   let component: NotaFiscalListComponent;
   let fixture: ComponentFixture<NotaFiscalListComponent>;
   let notaFiscalServiceMock: any;
+  let produtoServiceMock: any;
 
   const mockPagedResult: PagedResult<NotaFiscal> = {
     itens: [
@@ -45,10 +47,15 @@ describe('NotaFiscalListComponent', () => {
       create: vi.fn().mockReturnValue(of(mockPagedResult.itens[0]))
     };
 
+    produtoServiceMock = {
+      getPaginated: vi.fn().mockReturnValue(of({ itens: [] }))
+    };
+
     await TestBed.configureTestingModule({
       imports: [NotaFiscalListComponent, HttpClientTestingModule, FormsModule],
       providers: [
-        { provide: NotaFiscalService, useValue: notaFiscalServiceMock }
+        { provide: NotaFiscalService, useValue: notaFiscalServiceMock },
+        { provide: ProdutoService, useValue: produtoServiceMock }
       ]
     }).compileComponents();
 
@@ -62,7 +69,7 @@ describe('NotaFiscalListComponent', () => {
   });
 
   it('deve carregar notas fiscais paginadas ao inicializar', () => {
-    expect(notaFiscalServiceMock.getPaginated).toHaveBeenCalledWith(1, 10, undefined);
+    expect(notaFiscalServiceMock.getPaginated).toHaveBeenCalledWith(1, 10, undefined, 'data_desc');
     expect(component.pagedResult).toEqual(mockPagedResult);
     expect(component.notasView.length).toBe(2);
   });
@@ -82,6 +89,6 @@ describe('NotaFiscalListComponent', () => {
   it('deve filtrar por status ao clicar na aba', () => {
     component.alterarFiltroStatus('Aberta');
     expect(component.statusFiltro).toBe('Aberta');
-    expect(notaFiscalServiceMock.getPaginated).toHaveBeenCalledWith(1, 10, 'Aberta');
+    expect(notaFiscalServiceMock.getPaginated).toHaveBeenCalledWith(1, 10, 'Aberta', 'data_desc');
   });
 });

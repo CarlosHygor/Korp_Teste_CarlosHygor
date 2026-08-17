@@ -55,28 +55,16 @@ interface NotaFiscalView extends NotaFiscal {
         <p>Emita, filtre e processe a impressão distribuída de Notas Fiscais com baixa no Estoque.</p>
       </div>
 
-      <div class="page-actions">
-        <div class="sort-selector">
-          <label for="sortNota">Ordenar por:</label>
-          <select id="sortNota" [ngModel]="ordenacao" (ngModelChange)="alterarOrdenacao($event)" class="select-sort">
-            <option value="data_desc">Mais Recentes Primeiro (▼)</option>
-            <option value="data_asc">Mais Antigas Primeiro (▲)</option>
-            <option value="itens_desc">Maior Qtd de Itens (▼)</option>
-            <option value="itens_asc">Menor Qtd de Itens (▲)</option>
-          </select>
-        </div>
-
-        <button class="btn btn-primary" (click)="abrirModalCadastro()">
-          <svg class="btn-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Nova Nota Fiscal
-        </button>
-      </div>
+      <button class="btn btn-primary" (click)="abrirModalCadastro()">
+        <svg class="btn-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Nova Nota Fiscal
+      </button>
     </div>
 
-    <!-- Barra de Filtros por Status -->
+    <!-- Barra de Filtros por Status e Ordenação -->
     <div class="filters-bar">
       <div class="tabs-container">
         <button 
@@ -102,6 +90,16 @@ interface NotaFiscalView extends NotaFiscal {
           <span class="tab-dot dot-fechada"></span>
           <span>Fechadas (Impressas)</span>
         </button>
+      </div>
+
+      <div class="sort-selector">
+        <label for="sortNota">Ordenar por:</label>
+        <select id="sortNota" [ngModel]="ordenacao" (ngModelChange)="alterarOrdenacao($event)" class="select-sort">
+          <option value="data_desc">Mais Recentes Primeiro (▼)</option>
+          <option value="data_asc">Mais Antigas Primeiro (▲)</option>
+          <option value="itens_desc">Maior Qtd de Itens (▼)</option>
+          <option value="itens_asc">Menor Qtd de Itens (▲)</option>
+        </select>
       </div>
     </div>
 
@@ -333,7 +331,12 @@ interface NotaFiscalView extends NotaFiscal {
 
     /* Filters Bar */
     .filters-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 1.25rem;
+      gap: 1rem;
+      flex-wrap: wrap;
     }
 
     .tabs-container {

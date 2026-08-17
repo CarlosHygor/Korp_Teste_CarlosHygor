@@ -3,12 +3,12 @@
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)](https://www.postgresql.org/)
 [![Angular](https://img.shields.io/badge/Angular-22-DD0031?logo=angular)](https://angular.dev/)
-[![xUnit](https://img.shields.io/badge/Tests-37%20Passed-brightgreen?logo=nuget)](https://xunit.net/)
+[![xUnit](https://img.shields.io/badge/Tests-65%20Passed-brightgreen?logo=xunit)](https://xunit.net/)
 [![Docker](https://img.shields.io/badge/Environment-DevContainer-2496ED?logo=docker)](https://www.docker.com/)
 
 > **Projeto de Desafio Técnico / Portfólio de Engenharia de Software**  
 > **Desenvolvedor:** Carlos Hygor  
-> **Objetivo:** Solução distribuída em **Arquitetura de Microsserviços** desacoplada para controle de estoque e faturamento de notas fiscais, combinando **ASP.NET Core 8**, **Entity Framework Core**, **PostgreSQL**, **Angular 22** e uma suíte rigorosa de **Testes Automatizados (41 testes aprovados)**.
+> **Objetivo:** Solução distribuída em **Arquitetura de Microsserviços** desacoplada para controle de estoque e faturamento de notas fiscais, combinando **ASP.NET Core 8**, **Entity Framework Core**, **PostgreSQL**, **Angular 22** e uma suíte rigorosa de **Testes Automatizados (65 testes aprovados: 41 C# + 24 Vitest)**.
 
 ---
 
@@ -83,15 +83,22 @@ Interface SPA moderna em **Angular 22** projetada para alta produtividade operac
 
 #### 💡 Destaques de Engenharia & Arquitetura Frontend:
 * **Arquitetura de Standalone Components**: Estrutura modular limpa sem `NgModule`, utilizando componentes isolados e consumo reativo de APIs REST via RxJS (`HttpClient`, `pipe`, `finalize`).
-* **Design System KORP ERP (Theme)**: Layout responsivo em modo escuro (`#12222a` / `#1a2f3a`), badge em tempo real do status das APIs C#, componentes de loading overlay bloqueante e acessibilidade.
+* **Design System KORP ERP (Theme)**: Layout responsivo em modo escuro (`#12222a` / `#1a2f3a`), padronização visual das tabelas, indicador de APIs no rodapé e barra de ferramentas em 2 linhas.
+* **♿ Recursos de Acessibilidade Web (WCAG 2.2 Level AAA)**:
+  - **🤟 Widget Oficial VLibras**: Tradução nativa para Língua Brasileira de Sinais via avatar 3D do Governo Federal.
+  - **🔤 Redimensionamento de Fonte (`A-`, `A`, `A+`)**: Controle da escala de fonte no `html` de 85% até 130%.
+  - **👁️ Modo Alto Contraste**: Alternância instantânea via CSS Custom Properties (`:root` -> `.high-contrast`) com ícone SVG vetorizado da W3C.
+  - **⌨️ Anéis de Foco de Teclado**: Suporte a navegação completa por `Tab` e `Shift+Tab` via `:focus-visible`.
 * **Módulo de Estoque (Produtos)**:
   - Tabela paginada com seletor de itens por página (5, 10, 20).
+  - **Busca em Tempo Real com Debounce (350ms)**: Busca por código ou descrição usando RxJS `Subject<string>` com `debounceTime(350)` e `distinctUntilChanged()`.
   - Ordenação dinâmica por saldo (Maior / Menor Saldo Primeiro).
   - Formulário reativo de cadastro e edição de produtos.
   - Confirmação de exclusão com tratamento de conflito de código duplicado (HTTP 409).
 * **Módulo de Faturamento (Notas Fiscais)**:
   - Tabela paginada de notas fiscais com numeração sequencial formatada (`<code>#0001</code>`).
   - Filtro por abas de status (`Todas`, `Abertas`, `Fechadas`).
+  - **Ordenação Flexível**: Ordenação por data de emissão ou quantidade de itens (`data_asc`, `data_desc`, `itens_asc`, `itens_desc`).
   - Accordion expansível por linha para visualização dos itens vinculados à nota fiscal.
   - Modal de cadastro reativo com **`FormArray`** dinâmico para adição e remoção de múltiplos produtos.
   - **UX Defensiva**: Seletor que desabilita itens sem estoque (`saldo == 0`), card rico de detalhes do produto selecionado (código, descrição completa e saldo) e trava no botão de adição até preenchimento do item atual.
@@ -99,8 +106,8 @@ Interface SPA moderna em **Angular 22** projetada para alta produtividade operac
   - **HTTP 200 OK**: Transição da nota para `Fechada` + baixa no estoque físico + recarga automática dos saldos.
   - **HTTP 503 Service Unavailable (Estoque Offline)**: Captura e exibição de modal de **Aviso de Resiliência (⚡)** informando que a nota permaneceu **ABERTA** para tentar novamente assim que o serviço estabilizar.
   - **HTTP 422 Unprocessable Entity (Saldo Insuficiente)**: Exibição de modal com tabela explicativa do código do produto, saldo no banco e quantidade solicitada.
-* **Suíte de Testes Unitários Frontend (Vitest)**:
-  - Testes cobrindo componentes, paginação, formatação de dados e filtros por status.
+* **Suíte de Testes Unitários Frontend (Vitest + AnalogJS)**:
+  - Testes cobrindo componentes de tela, validação reativa de formulários, paginação, regras de saldo e modais de erro.
 
 ---
 
@@ -123,20 +130,22 @@ A aplicação segue a **Cadeia Hierárquica de Configurações do .NET 8**:
 
 ---
 
-## 🧪 Como Executar a Suíte Completa de Testes (41 Testes)
+## 🧪 Como Executar a Suíte Completa de Testes (65 Testes Aprovados)
 
-Para executar a suíte de testes de ambos os microsserviços:
-
+### 1. Testes do Backend (C# / .NET 8 xUnit) — 41 Testes
 ```bash
 dotnet test backend/Estoque.API.Tests/Estoque.API.Tests.csproj && dotnet test backend/Faturamento.API.Tests/Faturamento.API.Tests.csproj
 ```
+**Resultado:**
+- `Estoque.API.Tests`: **23/23 Aprovados**
+- `Faturamento.API.Tests`: **18/18 Aprovados**
 
-**Resultado esperado:**
-```text
-Passed!  - Failed: 0, Passed: 23, Skipped: 0, Total: 23 (Estoque.API.Tests.dll)
-Passed!  - Failed: 0, Passed: 18, Skipped: 0, Total: 18 (Faturamento.API.Tests.dll)
-Total: 41 testes aprovados!
+### 2. Testes do Frontend (Angular 22 / Vitest) — 24 Testes
+```bash
+cd frontend && npm test
 ```
+**Resultado:**
+- `6 arquivos .spec.ts`: **24/24 Aprovados**
 
 ---
 

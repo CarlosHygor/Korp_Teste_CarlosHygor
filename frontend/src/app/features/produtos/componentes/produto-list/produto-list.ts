@@ -50,37 +50,38 @@ import { SuccessModalComponent, MensagemSucesso } from '../../../../shared/compo
         <p>Cadastre novos itens e acompanhe a disponibilidade física em tempo real.</p>
       </div>
 
-      <div class="page-actions">
-        <div class="search-box">
-          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input 
-            type="text" 
-            [ngModel]="termoBusca" 
-            (ngModelChange)="aoDigitarBusca($event)" 
-            placeholder="Buscar código ou descrição..." 
-            class="input-search"
-          />
-        </div>
+      <button class="btn btn-primary" (click)="abrirModalCadastro()">
+        <svg class="btn-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Cadastrar Produto
+      </button>
+    </div>
 
-        <div class="sort-selector">
-          <label for="sortSaldo">Ordenar Saldo:</label>
-          <select id="sortSaldo" [ngModel]="ordenarPorSaldo" (ngModelChange)="alterarOrdenacaoSaldo($event)" class="select-sort">
-            <option [value]="null">Padrão (ID)</option>
-            <option value="asc">Menor Saldo Primeiro (▲)</option>
-            <option value="desc">Maior Saldo Primeiro (▼)</option>
-          </select>
-        </div>
+    <!-- Barra de Ferramentas: Busca e Ordenação -->
+    <div class="toolbar-bar">
+      <div class="search-box">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="text" 
+          [ngModel]="termoBusca" 
+          (ngModelChange)="aoDigitarBusca($event)" 
+          placeholder="Buscar código ou descrição..." 
+          class="input-search"
+        />
+      </div>
 
-        <button class="btn btn-primary" (click)="abrirModalCadastro()">
-          <svg class="btn-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Cadastrar Produto
-        </button>
+      <div class="sort-selector">
+        <label for="sortSaldo">Ordenar Saldo:</label>
+        <select id="sortSaldo" [ngModel]="ordenarPorSaldo" (ngModelChange)="alterarOrdenacaoSaldo($event)" class="select-sort">
+          <option [value]="null">Padrão (ID)</option>
+          <option value="asc">Menor Saldo Primeiro (▲)</option>
+          <option value="desc">Maior Saldo Primeiro (▼)</option>
+        </select>
       </div>
     </div>
 
@@ -177,10 +178,34 @@ import { SuccessModalComponent, MensagemSucesso } from '../../../../shared/compo
     </div>
   `,
   styles: [`
-    .page-actions {
+    .page-header {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 0.875rem;
+      margin-bottom: 1.5rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .page-title h2 {
+      margin: 0 0 0.25rem 0;
+      color: #f8fafc;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .page-title p {
+      margin: 0;
+      color: #94a3b8;
+      font-size: 0.875rem;
+    }
+
+    .toolbar-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      gap: 1rem;
       flex-wrap: wrap;
     }
 
