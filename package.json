@@ -1,0 +1,10 @@
+{
+  "name": "korp-teste-carlos-hygor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:all": "node scripts/generate-test-report.mjs",
+    "test:report": "node scripts/generate-test-report.mjs"
+  }
+}

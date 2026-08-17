@@ -1,4 +1,4 @@
-name: .NET 8 CI Pipeline
+name: Fullstack (.NET 8 & Angular) CI Pipeline
 
 on:
   push:
@@ -8,32 +8,36 @@ on:
 
 jobs:
   build-and-test:
-    name: Build & Test Microservices
+    name: Build & Test Microservices and Frontend
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
     - name: Setup .NET 8.0 SDK
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
-    - name: Restore Dependencies
+    - name: Restore Backend Dependencies
       run: |
         dotnet restore backend/Estoque.API/Estoque.API.csproj
         dotnet restore backend/Faturamento.API/Faturamento.API.csproj
         dotnet restore backend/Estoque.API.Tests/Estoque.API.Tests.csproj
         dotnet restore backend/Faturamento.API.Tests/Faturamento.API.Tests.csproj
 
-    - name: Build Microservices
+    - name: Install Frontend Dependencies
+      run: npm ci
+      working-directory: frontend
+
+    - name: Run Centralized Test Runner & Generate Summary
       run: |
-        dotnet build backend/Estoque.API/Estoque.API.csproj --no-restore --configuration Release
-        dotnet build backend/Faturamento.API/Faturamento.API.csproj --no-restore --configuration Release
+        node scripts/generate-test-report.mjs
+        cat TEST_RESULTS.md >> $GITHUB_STEP_SUMMARY
 
-    - name: Run Estoque.API Tests
-      run: dotnet test backend/Estoque.API.Tests/Estoque.API.Tests.csproj --configuration Release --verbosity normal
-
-    - name: Run Faturamento.API Tests
-      run: dotnet test backend/Faturamento.API.Tests/Faturamento.API.Tests.csproj --configuration Release --verbosity normal
