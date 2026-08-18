@@ -45,11 +45,16 @@ public class EstoqueClient : IEstoqueClient
         }
     }
 
-    public async Task AbaterEstoqueLoteAsync(IEnumerable<ItemAbateEstoqueDto> itens)
+    public async Task AbaterEstoqueLoteAsync(IEnumerable<ItemAbateEstoqueDto> itens, string? idempotencyKey = null)
     {
         try
         {
-            var response = await _httpClient.PostAsJsonAsync("api/produtos/abater-lote", itens);
+            var payload = new
+            {
+                idempotencyKey,
+                itens
+            };
+            var response = await _httpClient.PostAsJsonAsync("api/produtos/abater-lote", payload);
 
             if (response.IsSuccessStatusCode)
             {

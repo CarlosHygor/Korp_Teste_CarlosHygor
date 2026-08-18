@@ -23,12 +23,12 @@ public class ProdutoService : IProdutoService
         return await _produtoRepository.GetAllAsync();
     }
 
-    public async Task<PagedResultDto<Produto>> GetPaginatedAsync(int pagina, int tamanhoPagina, string? ordenarPorSaldo = null)
+    public async Task<PagedResultDto<Produto>> GetPaginatedAsync(int pagina, int tamanhoPagina, string? ordenarPorSaldo = null, string? busca = null)
     {
         var paginaValida = pagina <= 0 ? 1 : pagina;
         var tamanhoValido = tamanhoPagina <= 0 ? 10 : (tamanhoPagina > 100 ? 100 : tamanhoPagina);
 
-        var (itens, totalRegistros) = await _produtoRepository.GetPaginatedAsync(paginaValida, tamanhoValido, ordenarPorSaldo);
+        var (itens, totalRegistros) = await _produtoRepository.GetPaginatedAsync(paginaValida, tamanhoValido, ordenarPorSaldo, busca);
 
         var totalPaginas = (int)Math.Ceiling(totalRegistros / (double)tamanhoValido);
         var temPaginaAnterior = paginaValida > 1;
@@ -137,12 +137,25 @@ public class ProdutoService : IProdutoService
         await _produtoRepository.UpdateAsync(produto);
     }
 
-    public async Task AbaterEstoqueLoteAsync(IEnumerable<AbaterItemEstoqueDto> itens)
+    public async Task<bool> AbaterEstoqueLoteAsync(IEnumerable<AbaterItemEstoqueDto> itens, string? idempotencyKey = null)
     {
         var listaItens = itens?.ToList() ?? new List<AbaterItemEstoqueDto>();
         if (!listaItens.Any())
         {
             throw new ArgumentException("A lista de itens para abate de estoque não pode estar vazia.");
+        }
+
+        // Se uma chave de idempotência foi fornecida, verifica se a transação já foi processada anteriormente
+        if (!string.IsNullOrWhiteSpace(idempotencyKey))
+        {
+            var jaProcessado = await _context.ProcessamentosIdempotentes
+                .AnyAsync(p => p.Chave == idempotencyKey);
+
+            if (jaProcessado)
+            {
+                // Retorna false para indicar que o abate foi ignorado por idempotência (já executado)
+                return false;
+            }
         }
 
         // Reutiliza a lógica de recomposição individual e garante a atomicidade das operações
@@ -155,7 +168,19 @@ public class ProdutoService : IProdutoService
                 await AbaterEstoqueAsync(item.CodigoProduto, item.Quantidade);
             }
 
+            // Grava a chave de idempotência no banco dentro da mesma transação atômica
+            if (!string.IsNullOrWhiteSpace(idempotencyKey))
+            {
+                _context.ProcessamentosIdempotentes.Add(new ProcessamentoIdempotente
+                {
+                    Chave = idempotencyKey,
+                    DataProcessamentoUtc = DateTime.UtcNow
+                });
+                await _context.SaveChangesAsync();
+            }
+
             await transaction.CommitAsync();
+            return true;
         }
         catch
         {

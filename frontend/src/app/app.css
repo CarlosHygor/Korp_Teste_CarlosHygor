@@ -26,6 +26,55 @@
   --danger: #f43f5e;
 }
 
+/* High Contrast Accessibility Mode (WCAG 2.2 Level AAA) */
+body.high-contrast {
+  --bg-dark: #000000;
+  --bg-card: #050505;
+  --bg-card-hover: #111111;
+  --bg-header: #000000;
+  
+  --primary: #ffff00;
+  --primary-hover: #eab308;
+  --primary-light: rgba(255, 255, 0, 0.2);
+  
+  --korp-red: #ff3333;
+  --korp-cyan: #ffff00;
+  
+  --text-main: #ffffff;
+  --text-muted: #ffffff;
+  --border: #ffff00;
+  
+  --success: #00ff00;
+  --warning: #ffff00;
+  --danger: #ff3333;
+}
+
+body.high-contrast * {
+  border-color: var(--border) !important;
+}
+
+body.high-contrast code {
+  background: #000000 !important;
+  color: #ffff00 !important;
+  border-color: #ffff00 !important;
+}
+
+body.high-contrast .nav-tab.active {
+  background-color: #ffff00 !important;
+  color: #000000 !important;
+}
+
+/* Keyboard Focus Rings for WCAG Accessibility */
+:focus-visible {
+  outline: 3px solid #38bdf8 !important;
+  outline-offset: 2px !important;
+}
+
+body.high-contrast :focus-visible {
+  outline: 3px solid #ffff00 !important;
+  outline-offset: 2px !important;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -314,12 +363,28 @@ body {
 
 /* Footer */
 .app-footer {
-  text-align: center;
-  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
   border-top: 1px solid var(--border);
   color: var(--text-muted);
   font-size: 0.8125rem;
   background-color: var(--bg-header);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.footer-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #0f1c23;
+  color: #34d399;
+  font-weight: 600;
+  padding: 0.25rem 0.625rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 /* Responsive adjustments */

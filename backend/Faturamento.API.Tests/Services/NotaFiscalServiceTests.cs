@@ -100,7 +100,7 @@ public class NotaFiscalServiceTests
             .ReturnsAsync(notaAberta);
 
         _estoqueClientMock
-            .Setup(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>()))
+            .Setup(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -108,7 +108,7 @@ public class NotaFiscalServiceTests
 
         // Assert
         result.Status.Should().Be(StatusNotaFiscal.Fechada);
-        _estoqueClientMock.Verify(c => c.AbaterEstoqueLoteAsync(It.Is<IEnumerable<ItemAbateEstoqueDto>>(lote => lote.Count() == 2)), Times.Once);
+        _estoqueClientMock.Verify(c => c.AbaterEstoqueLoteAsync(It.Is<IEnumerable<ItemAbateEstoqueDto>>(lote => lote.Count() == 2), It.IsAny<string>()), Times.Once);
         _notaFiscalRepositoryMock.Verify(r => r.UpdateAsync(notaAberta), Times.Once);
     }
 
@@ -134,7 +134,7 @@ public class NotaFiscalServiceTests
         await act.Should().ThrowAsync<NotaFiscalStatusInvalidoException>()
             .WithMessage("*já está com status 'Fechada'*");
 
-        _estoqueClientMock.Verify(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>()), Times.Never);
+        _estoqueClientMock.Verify(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>(), It.IsAny<string>()), Times.Never);
         _notaFiscalRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<NotaFiscal>()), Times.Never);
     }
 
@@ -154,7 +154,7 @@ public class NotaFiscalServiceTests
             .ReturnsAsync(notaAberta);
 
         _estoqueClientMock
-            .Setup(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>()))
+            .Setup(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>(), It.IsAny<string>()))
             .ThrowsAsync(new NotaFiscalStatusInvalidoException("Serviço de estoque indisponível"));
 
         // Act
@@ -184,7 +184,7 @@ public class NotaFiscalServiceTests
             .ReturnsAsync(notaAberta);
 
         _estoqueClientMock
-            .Setup(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>()))
+            .Setup(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Simula falha de persistência no banco do Faturamento no momento da gravação do status Fechada
@@ -204,7 +204,7 @@ public class NotaFiscalServiceTests
             .WithMessage("*revertido com sucesso*");
 
         // Valida que o abate foi feito primeiro E em seguida a Ação Compensatória de estorno foi acionada
-        _estoqueClientMock.Verify(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>()), Times.Once);
+        _estoqueClientMock.Verify(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>(), It.IsAny<string>()), Times.Once);
         _estoqueClientMock.Verify(c => c.EstornarEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>()), Times.Once);
     }
 
@@ -218,7 +218,7 @@ public class NotaFiscalServiceTests
             new NotaFiscalBuilder().ComId(2).ComNumeracao(1002).ComStatus(StatusNotaFiscal.Fechada).Build()
         };
 
-        _notaFiscalRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, null))
+        _notaFiscalRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, null, null))
                                  .ReturnsAsync((notas, 35));
 
         // Act
@@ -244,7 +244,7 @@ public class NotaFiscalServiceTests
             new NotaFiscalBuilder().ComId(1).ComNumeracao(1001).ComStatus(StatusNotaFiscal.Aberta).Build()
         };
 
-        _notaFiscalRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, StatusNotaFiscal.Aberta))
+        _notaFiscalRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, StatusNotaFiscal.Aberta, null))
                                  .ReturnsAsync((notasAberta, 1));
 
         // Act
@@ -254,6 +254,27 @@ public class NotaFiscalServiceTests
         result.Should().NotBeNull();
         result.Itens.Count().Should().Be(1);
         result.Itens.First().Status.Should().Be(StatusNotaFiscal.Aberta);
-        _notaFiscalRepositoryMock.Verify(r => r.GetPaginatedAsync(1, 10, StatusNotaFiscal.Aberta), Times.Once);
+        _notaFiscalRepositoryMock.Verify(r => r.GetPaginatedAsync(1, 10, StatusNotaFiscal.Aberta, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPaginatedAsync_ComOrdenacao_DeveRepassarOrdenacaoParaRepositorio()
+    {
+        // Arrange
+        var notas = new List<NotaFiscal>
+        {
+            new NotaFiscalBuilder().ComId(1).ComNumeracao(1001).Build()
+        };
+
+        _notaFiscalRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, null, "itens_desc"))
+                                 .ReturnsAsync((notas, 1));
+
+        // Act
+        var result = await _service.GetPaginatedAsync(1, 10, null, "itens_desc");
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Itens.Should().HaveCount(1);
+        _notaFiscalRepositoryMock.Verify(r => r.GetPaginatedAsync(1, 10, null, "itens_desc"), Times.Once);
     }
 }

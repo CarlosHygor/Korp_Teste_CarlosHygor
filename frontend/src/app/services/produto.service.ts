@@ -16,13 +16,17 @@ export class ProdutoService {
   /**
    * Retorna a lista paginada de produtos do Estoque.API com suporte a ordenação por saldo.
    */
-  getPaginated(pagina: number = 1, tamanhoPagina: number = 10, ordenarPorSaldo?: 'asc' | 'desc' | null): Observable<PagedResult<Produto>> {
+  getPaginated(pagina: number = 1, tamanhoPagina: number = 10, ordenarPorSaldo?: 'asc' | 'desc' | null, busca?: string): Observable<PagedResult<Produto>> {
     let params = new HttpParams()
       .set('pagina', pagina.toString())
       .set('tamanhoPagina', tamanhoPagina.toString());
 
     if (ordenarPorSaldo) {
       params = params.set('ordenarPorSaldo', ordenarPorSaldo);
+    }
+
+    if (busca && busca.trim()) {
+      params = params.set('busca', busca.trim());
     }
 
     return this.http.get<PagedResult<Produto>>(this.apiUrl, { params });

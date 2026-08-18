@@ -24,9 +24,9 @@ public class ProdutosController : ControllerBase
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResultDto<ProdutoResponseDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] int pagina = 1, [FromQuery] int tamanhoPagina = 10, [FromQuery] string? ordenarPorSaldo = null)
+    public async Task<IActionResult> GetAll([FromQuery] int pagina = 1, [FromQuery] int tamanhoPagina = 10, [FromQuery] string? ordenarPorSaldo = null, [FromQuery] string? busca = null)
     {
-        var resultadoPaginado = await _produtoService.GetPaginatedAsync(pagina, tamanhoPagina, ordenarPorSaldo);
+        var resultadoPaginado = await _produtoService.GetPaginatedAsync(pagina, tamanhoPagina, ordenarPorSaldo, busca);
 
         var dtoPaginado = new PagedResultDto<ProdutoResponseDto>(
             resultadoPaginado.Itens.ToResponseDtoList(),
@@ -133,17 +133,57 @@ public class ProdutosController : ControllerBase
     }
 
     /// <summary>
-    /// Abate o saldo de múltiplos produtos em lote com garantia de transação atômica (Tudo ou Nada).
+    /// Abate o saldo de múltiplos produtos em lote com garantia de transação atômica e Idempotência.
+    /// Suporta tanto o payload em formato de Objeto com IdempotencyKey quanto Array simples de itens.
     /// </summary>
     [HttpPost("abater-lote")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    public async Task<IActionResult> AbaterEstoqueLote([FromBody] List<AbaterItemEstoqueDto> itens)
+    public async Task<IActionResult> AbaterEstoqueLote(
+        [FromBody] System.Text.Json.JsonElement body,
+        [FromHeader(Name = "X-Idempotency-Key")] string? idempotencyHeader)
     {
-        await _produtoService.AbaterEstoqueLoteAsync(itens);
-        return Ok(new { mensagem = $"Abate em lote de {itens?.Count ?? 0} produto(s) realizado com sucesso no estoque." });
+        string? chaveIdempotencia = idempotencyHeader;
+        List<AbaterItemEstoqueDto> itens = new();
+
+        var jsonOptions = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+        if (body.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            itens = System.Text.Json.JsonSerializer.Deserialize<List<AbaterItemEstoqueDto>>(body.GetRawText(), jsonOptions) ?? new();
+        }
+        else if (body.ValueKind == System.Text.Json.JsonValueKind.Object)
+        {
+            var request = System.Text.Json.JsonSerializer.Deserialize<AbaterEstoqueLoteRequestDto>(body.GetRawText(), jsonOptions);
+            if (!string.IsNullOrWhiteSpace(request?.IdempotencyKey))
+            {
+                chaveIdempotencia = request.IdempotencyKey;
+            }
+            itens = request?.Itens ?? new();
+        }
+        else
+        {
+            return BadRequest(new { mensagem = "O payload enviado para abate em lote é inválido." });
+        }
+
+        var executado = await _produtoService.AbaterEstoqueLoteAsync(itens, chaveIdempotencia);
+
+        if (!executado && !string.IsNullOrWhiteSpace(chaveIdempotencia))
+        {
+            return Ok(new
+            {
+                mensagem = $"A requisição com a chave '{chaveIdempotencia}' já foi processada anteriormente. Abate de estoque ignorado por Idempotência.",
+                idempotente = true
+            });
+        }
+
+        return Ok(new
+        {
+            mensagem = $"Abate em lote de {itens.Count} produto(s) realizado com sucesso no estoque.",
+            idempotente = false
+        });
     }
 
     /// <summary>

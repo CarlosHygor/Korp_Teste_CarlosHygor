@@ -3,12 +3,12 @@
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)](https://www.postgresql.org/)
 [![Angular](https://img.shields.io/badge/Angular-22-DD0031?logo=angular)](https://angular.dev/)
-[![xUnit](https://img.shields.io/badge/Tests-37%20Passed-brightgreen?logo=nuget)](https://xunit.net/)
+[![xUnit](https://img.shields.io/badge/Tests-65%20Passed-brightgreen?logo=xunit)](https://xunit.net/)
 [![Docker](https://img.shields.io/badge/Environment-DevContainer-2496ED?logo=docker)](https://www.docker.com/)
 
 > **Projeto de Desafio Técnico / Portfólio de Engenharia de Software**  
 > **Desenvolvedor:** Carlos Hygor  
-> **Objetivo:** Solução distribuída em **Arquitetura de Microsserviços** desacoplada para controle de estoque e faturamento de notas fiscais, combinando **ASP.NET Core 8**, **Entity Framework Core**, **PostgreSQL**, **Angular 22** e uma suíte rigorosa de **Testes Automatizados (37 testes aprovados)**.
+> **Objetivo:** Solução distribuída em **Arquitetura de Microsserviços** desacoplada para controle de estoque e faturamento de notas fiscais, combinando **ASP.NET Core 8**, **Entity Framework Core**, **PostgreSQL**, **Angular 22** e uma suíte rigorosa de **Testes Automatizados (65 testes aprovados: 41 C# + 24 Vitest)**.
 
 ---
 
@@ -31,6 +31,36 @@ graph TD
 ```
 
 ---
+
+## 🧠 Decisões de Arquitetura & Trade-offs (Architectural Decision Records)
+
+Nesta seção estão documentadas as decisões técnicas tomadas durante a concepção do sistema, registrando o racional de engenharia, prós e contras de produto:
+
+### 1. ⚡ Caching Distribuído (Redis vs. Consultas Indexadas no PostgreSQL)
+* **Contexto:** Avaliação da inclusão de camada de Cache (ex: Redis) para os endpoints de consulta paginada (`GET /api/produtos` e `GET /api/notasfiscais`).
+* **Decisão:** Opção por consultas indexadas diretamente no banco relacional PostgreSQL, sem adição de camada de cache em memória.
+* **Racional de Engenharia:**
+  - **Mutações Frequentes & Taxa de Invalidação:** A impressão de Notas Fiscais altera saldos de produtos constantemente. Em estratégias de *Cache-Aside*, essa mutação constante exigiria invalidações frequentes (*Cache Eviction*) de chaves de paginação e busca, reduzindo o *Cache Hit Rate* e tornando o cache ineficaz.
+  - **Garantia de Consistência Forte (ACID):** O domínio exige que o usuário veja imediatamente o saldo real do produto após a impressão de uma nota fiscal, evitando dados obsoletos (*stale data*).
+  - **Evitando Otimização Precoce (KISS / YAGNI):** As tabelas no PostgreSQL utilizam índices dedicados nas colunas de ordenação e busca, respondendo em sub-milissegundos (< 5ms) para a volumetria pretendida sem adicionar a complexidade operacional de infraestrutura do Redis.
+
+### 2. 🔑 Garantia de Idempotência e Padrão Saga na Integração de Microsserviços
+* **Contexto:** Prevenção de duplo abate de estoque em cenários de falha de rede (*Timeout* / *Retries*) durante a impressão de Notas Fiscais entre `Faturamento.API` e `Estoque.API`.
+* **Decisão:** Implementar a tabela `processamentos_idempotentes` e suporte a `IdempotencyKey` no endpoint `POST /api/produtos/abater-lote`.
+* **Racional de Engenharia:**
+  - **Desafios de Redes Instáveis:** Se o `Estoque.API` abater o saldo com sucesso, mas o pacote de resposta HTTP cair por *Timeout* de rede, o `Faturamento.API` não sabe se a operação foi concluída e tenta um *Retry*.
+  - **Deduplicação de Comandos:** O `Estoque.API` verifica se a `IdempotencyKey` (ex: `NF-0001`) já foi processada. Em caso positivo, retorna HTTP 200 OK sem descontar o saldo uma segunda vez (`saldo -= N`).
+  - **Ação Compensatória (Saga):** Se o banco do Faturamento falhar após o abate no Estoque, o sistema dispara o estorno atômico em lote (`EstornarEstoqueLoteAsync`).
+
+### 3. 🛡️ Tratamento de Concorrência e Prevenção de Overbooking (Defense in Depth)
+* **Contexto:** Garantir que quando dois usuários/notas tentarem abater o último item de um produto simultaneamente (Saldo = 1), o sistema impeça o abate duplicado (*Overbooking* / Saldo Negativo).
+* **Decisão:** Arquitetura de Proteção em 3 Camadas (*Defense in Depth*): *Pessimistic Row-Level Locking* nativo do PostgreSQL + Validação na Camada de Aplicação C# + *Check Constraint* física relacional (`CK_produtos_saldo`).
+* **Racional de Engenharia:**
+  - **Lock Pessimista de Linha:** Em transações `BeginTransactionAsync()`, o PostgreSQL bloqueia a linha do produto alterado. O segundo processo aguarda a liberação e lê o saldo re-atualizado (0).
+  - **Validação de Aplicação & Trava Física no Banco:** A aplicação barra o saldo insuficiente com `EstoqueInsuficienteException` (HTTP 422). Além disso, a constraint relacional `"Saldo" >= 0` impede fisicamente no banco qualquer inconsistência.
+
+---
+
 
 ## 🛠️ Status dos Módulos & Destaques de Engenharia
 
@@ -77,15 +107,37 @@ Responsável pela criação de Notas Fiscais com numeração sequencial automát
 
 ---
 
-### 3. 💻 Frontend Web (`frontend`) — Status: ⏳ Em Desenvolvimento
+### 3. 💻 Frontend Web (`frontend`) — Status: ✅ Concluído
 
-Interface SPA em **Angular 22** para interação do usuário com os microsserviços.
+Interface SPA moderna em **Angular 22** projetada para alta produtividade operacional (PDV/ERP), integrada diretamente aos dois microsserviços C# .NET 8.
 
-#### ⚙️ Recursos Mapeados:
-* Arquitetura de **Standalone Components** e **Angular Signals** para reatividade simples e performática.
-* Telas de cadastro e listagem paginada de produtos.
-* Emissão de Notas Fiscais com múltiplos itens.
-* Botão intuitivo de impressão com indicador de processamento (*loading*) e tratamento de mensagens de erro amigáveis vindas das APIs.
+#### 💡 Destaques de Engenharia & Arquitetura Frontend:
+* **Arquitetura de Standalone Components**: Estrutura modular limpa sem `NgModule`, utilizando componentes isolados e consumo reativo de APIs REST via RxJS (`HttpClient`, `pipe`, `finalize`).
+* **Design System KORP ERP (Theme)**: Layout responsivo em modo escuro (`#12222a` / `#1a2f3a`), padronização visual das tabelas, indicador de APIs no rodapé e barra de ferramentas em 2 linhas.
+* **♿ Recursos de Acessibilidade Web (WCAG 2.2 Level AAA)**:
+  - **🤟 Widget Oficial VLibras**: Tradução nativa para Língua Brasileira de Sinais via avatar 3D do Governo Federal.
+  - **🔤 Redimensionamento de Fonte (`A-`, `A`, `A+`)**: Controle da escala de fonte no `html` de 85% até 130%.
+  - **👁️ Modo Alto Contraste**: Alternância instantânea via CSS Custom Properties (`:root` -> `.high-contrast`) com ícone SVG vetorizado da W3C.
+  - **⌨️ Anéis de Foco de Teclado**: Suporte a navegação completa por `Tab` e `Shift+Tab` via `:focus-visible`.
+* **Módulo de Estoque (Produtos)**:
+  - Tabela paginada com seletor de itens por página (5, 10, 20).
+  - **Busca em Tempo Real com Debounce (350ms)**: Busca por código ou descrição usando RxJS `Subject<string>` com `debounceTime(350)` e `distinctUntilChanged()`.
+  - Ordenação dinâmica por saldo (Maior / Menor Saldo Primeiro).
+  - Formulário reativo de cadastro e edição de produtos.
+  - Confirmação de exclusão com tratamento de conflito de código duplicado (HTTP 409).
+* **Módulo de Faturamento (Notas Fiscais)**:
+  - Tabela paginada de notas fiscais com numeração sequencial formatada (`<code>#0001</code>`).
+  - Filtro por abas de status (`Todas`, `Abertas`, `Fechadas`).
+  - **Ordenação Flexível**: Ordenação por data de emissão ou quantidade de itens (`data_asc`, `data_desc`, `itens_asc`, `itens_desc`).
+  - Accordion expansível por linha para visualização dos itens vinculados à nota fiscal.
+  - Modal de cadastro reativo com **`FormArray`** dinâmico para adição e remoção de múltiplos produtos.
+  - **UX Defensiva**: Seletor que desabilita itens sem estoque (`saldo == 0`), card rico de detalhes do produto selecionado (código, descrição completa e saldo) e trava no botão de adição até preenchimento do item atual.
+* **Tratamento de Erros & Resiliência Distribuída no Client**:
+  - **HTTP 200 OK**: Transição da nota para `Fechada` + baixa no estoque físico + recarga automática dos saldos.
+  - **HTTP 503 Service Unavailable (Estoque Offline)**: Captura e exibição de modal de **Aviso de Resiliência (⚡)** informando que a nota permaneceu **ABERTA** para tentar novamente assim que o serviço estabilizar.
+  - **HTTP 422 Unprocessable Entity (Saldo Insuficiente)**: Exibição de modal com tabela explicativa do código do produto, saldo no banco e quantidade solicitada.
+* **Suíte de Testes Unitários Frontend (Vitest + AnalogJS)**:
+  - Testes cobrindo componentes de tela, validação reativa de formulários, paginação, regras de saldo e modais de erro.
 
 ---
 
@@ -108,20 +160,22 @@ A aplicação segue a **Cadeia Hierárquica de Configurações do .NET 8**:
 
 ---
 
-## 🧪 Como Executar a Suíte Completa de Testes (37 Testes)
+## 🧪 Como Executar a Suíte Completa de Testes (65 Testes Aprovados)
 
-Para executar a suíte de testes de ambos os microsserviços:
-
+### 1. Testes do Backend (C# / .NET 8 xUnit) — 41 Testes
 ```bash
 dotnet test backend/Estoque.API.Tests/Estoque.API.Tests.csproj && dotnet test backend/Faturamento.API.Tests/Faturamento.API.Tests.csproj
 ```
+**Resultado:**
+- `Estoque.API.Tests`: **23/23 Aprovados**
+- `Faturamento.API.Tests`: **18/18 Aprovados**
 
-**Resultado esperado:**
-```text
-Passed!  - Failed: 0, Passed: 21, Skipped: 0, Total: 21 (Estoque.API.Tests.dll)
-Passed!  - Failed: 0, Passed: 16, Skipped: 0, Total: 16 (Faturamento.API.Tests.dll)
-Total: 37 testes aprovados!
+### 2. Testes do Frontend (Angular 22 / Vitest) — 24 Testes
+```bash
+cd frontend && npm test
 ```
+**Resultado:**
+- `6 arquivos .spec.ts`: **24/24 Aprovados**
 
 ---
 
@@ -155,7 +209,7 @@ dotnet run --project backend/Faturamento.API/Faturamento.API.csproj
 | Método | Endpoint | Descrição | Status HTTP |
 | :--- | :--- | :--- | :--- |
 | **`GET`** | `/health` | Health Check nativo de disponibilidade | `200 OK` |
-| **`GET`** | `/api/produtos` | Lista paginada de produtos | `200 OK` |
+| **`GET`** | `/api/produtos` | Lista paginada com busca por código/descrição (`busca`) e ordenação por saldo (`ordenarPorSaldo`) | `200 OK` |
 | **`GET`** | `/api/produtos/{id}` | Detalhes do produto por ID | `200 OK`, `404 NotFound` |
 | **`GET`** | `/api/produtos/codigo/{codigo}` | Detalhes do produto por Código | `200 OK`, `404 NotFound` |
 | **`POST`** | `/api/produtos` | Cadastra um novo produto | `201 Created`, `400 BadRequest`, `409 Conflict` |
@@ -170,7 +224,7 @@ dotnet run --project backend/Faturamento.API/Faturamento.API.csproj
 | Método | Endpoint | Descrição | Status HTTP |
 | :--- | :--- | :--- | :--- |
 | **`GET`** | `/health` | Health Check nativo de disponibilidade | `200 OK` |
-| **`GET`** | `/api/notasfiscais` | Lista paginada de Notas Fiscais | `200 OK` |
+| **`GET`** | `/api/notasfiscais` | Lista paginada com filtro por `status` e ordenação por data ou qtd de itens (`ordenacao`) | `200 OK` |
 | **`GET`** | `/api/notasfiscais/{id}` | Detalhes da Nota Fiscal por ID | `200 OK`, `404 NotFound` |
 | **`GET`** | `/api/notasfiscais/numeracao/{num}` | Busca Nota Fiscal por numeração sequencial | `200 OK`, `404 NotFound` |
 | **`POST`** | `/api/notasfiscais` | Cria Nota Fiscal com status inicial `Aberta` | `201 Created`, `400 BadRequest` |

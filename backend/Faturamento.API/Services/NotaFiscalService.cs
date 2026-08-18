@@ -23,12 +23,12 @@ public class NotaFiscalService : INotaFiscalService
         return await _notaFiscalRepository.GetAllAsync();
     }
 
-    public async Task<PagedResultDto<NotaFiscal>> GetPaginatedAsync(int pagina, int tamanhoPagina, StatusNotaFiscal? status = null)
+    public async Task<PagedResultDto<NotaFiscal>> GetPaginatedAsync(int pagina, int tamanhoPagina, StatusNotaFiscal? status = null, string? ordenacao = null)
     {
         var paginaValida = pagina <= 0 ? 1 : pagina;
         var tamanhoValido = tamanhoPagina <= 0 ? 10 : (tamanhoPagina > 100 ? 100 : tamanhoPagina);
 
-        var (itens, totalRegistros) = await _notaFiscalRepository.GetPaginatedAsync(paginaValida, tamanhoValido, status);
+        var (itens, totalRegistros) = await _notaFiscalRepository.GetPaginatedAsync(paginaValida, tamanhoValido, status, ordenacao);
 
         var totalPaginas = (int)Math.Ceiling(totalRegistros / (double)tamanhoValido);
         var temPaginaAnterior = paginaValida > 1;
@@ -106,8 +106,9 @@ public class NotaFiscalService : INotaFiscalService
             .Select(i => new ItemAbateEstoqueDto(i.CodigoProduto, i.Quantidade))
             .ToList();
 
-        // 1. Envia a requisição em lote atômica para o Estoque.API
-        await _estoqueClient.AbaterEstoqueLoteAsync(itensAbate);
+        // 1. Envia a requisição em lote atômica com chave de idempotência única para o Estoque.API
+        var chaveIdempotencia = $"NF-{notaFiscal.Numeracao:D4}";
+        await _estoqueClient.AbaterEstoqueLoteAsync(itensAbate, chaveIdempotencia);
 
         try
         {

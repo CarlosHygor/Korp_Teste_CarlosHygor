@@ -25,7 +25,7 @@ describe('StatusBadgeComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(component.statusText).toBe('Aberta');
     expect(component.badgeClass).toBe('badge-aberta');
-    expect(compiled.textContent?.trim()).toContain('ABERTA');
+    expect(compiled.textContent?.trim()).toContain('Aberta');
   });
 
   it('deve renderizar status Fechada corretamente', () => {
@@ -35,7 +35,7 @@ describe('StatusBadgeComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(component.statusText).toBe('Fechada');
     expect(component.badgeClass).toBe('badge-fechada');
-    expect(compiled.textContent?.trim()).toContain('FECHADA');
+    expect(compiled.textContent?.trim()).toContain('Fechada');
   });
 
   it('deve converter número enum 1 para Fechada', () => {

@@ -153,7 +153,7 @@ public class NotasFiscaisControllerE2ETests : IClassFixture<WebApplicationFactor
         var notaDb = await db.NotasFiscais.FirstAsync(n => n.Numeracao == 9999);
 
         _estoqueClientMock
-            .Setup(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<Faturamento.API.Clients.DTOs.ItemAbateEstoqueDto>>()))
+            .Setup(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<Faturamento.API.Clients.DTOs.ItemAbateEstoqueDto>>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Act

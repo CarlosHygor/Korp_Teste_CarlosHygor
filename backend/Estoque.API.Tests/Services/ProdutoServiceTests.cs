@@ -220,7 +220,7 @@ public class ProdutoServiceTests
             new ProdutoBuilder().ComId(2).ComCodigo("PROD-02").ComDescricao("Item 2").ComSaldo(5).Build()
         };
 
-        _produtoRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, null))
+        _produtoRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, null, null))
                              .ReturnsAsync((produtos, 25));
 
         // Act
@@ -245,7 +245,7 @@ public class ProdutoServiceTests
             new ProdutoBuilder().ComId(1).ComCodigo("PROD-01").ComSaldo(50).Build()
         };
 
-        _produtoRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, "asc"))
+        _produtoRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, "asc", null))
                              .ReturnsAsync((produtosOrdenados, 2));
 
         // Act
@@ -254,7 +254,28 @@ public class ProdutoServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Itens.First().Saldo.Should().Be(2);
-        _produtoRepositoryMock.Verify(r => r.GetPaginatedAsync(1, 10, "asc"), Times.Once);
+        _produtoRepositoryMock.Verify(r => r.GetPaginatedAsync(1, 10, "asc", null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPaginatedAsync_ComTermoBusca_DeveRepassarTermoParaRepositorio()
+    {
+        // Arrange
+        var produtosFiltrados = new List<Produto>
+        {
+            new ProdutoBuilder().ComId(1).ComCodigo("TECLADO-01").ComDescricao("Teclado").Build()
+        };
+
+        _produtoRepositoryMock.Setup(r => r.GetPaginatedAsync(1, 10, null, "teclado"))
+                             .ReturnsAsync((produtosFiltrados, 1));
+
+        // Act
+        var result = await _produtoService.GetPaginatedAsync(1, 10, null, "teclado");
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Itens.Should().HaveCount(1);
+        _produtoRepositoryMock.Verify(r => r.GetPaginatedAsync(1, 10, null, "teclado"), Times.Once);
     }
 
     #endregion
