@@ -33,7 +33,7 @@ jobs:
         dotnet restore backend/Faturamento.API.Tests/Faturamento.API.Tests.csproj
 
     - name: Install Frontend Dependencies
-      run: npm ci
+      run: npm install
       working-directory: frontend
 
     - name: Run Centralized Test Runner & Generate Summary
