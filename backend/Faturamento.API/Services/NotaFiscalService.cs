@@ -106,8 +106,9 @@ public class NotaFiscalService : INotaFiscalService
             .Select(i => new ItemAbateEstoqueDto(i.CodigoProduto, i.Quantidade))
             .ToList();
 
-        // 1. Envia a requisição em lote atômica para o Estoque.API
-        await _estoqueClient.AbaterEstoqueLoteAsync(itensAbate);
+        // 1. Envia a requisição em lote atômica com chave de idempotência única para o Estoque.API
+        var chaveIdempotencia = $"NF-{notaFiscal.Numeracao:D4}";
+        await _estoqueClient.AbaterEstoqueLoteAsync(itensAbate, chaveIdempotencia);
 
         try
         {

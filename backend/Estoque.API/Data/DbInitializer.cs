@@ -53,5 +53,22 @@ public static class DbInitializer
 
         await context.Produtos.AddRangeAsync(produtos);
         await context.SaveChangesAsync();
+
+        if (!await context.ProcessamentosIdempotentes.AnyAsync())
+        {
+            var chavesIniciais = new List<string>
+            {
+                "NF-0003", "NF-0006", "NF-0009", "NF-0012", "NF-0015", "NF-0018", "NF-0022", "NF-0025", "NF-0028"
+            };
+
+            var processamentos = chavesIniciais.Select(c => new ProcessamentoIdempotente
+            {
+                Chave = c,
+                DataProcessamentoUtc = DateTime.UtcNow.AddDays(-10)
+            });
+
+            await context.ProcessamentosIdempotentes.AddRangeAsync(processamentos);
+            await context.SaveChangesAsync();
+        }
     }
 }

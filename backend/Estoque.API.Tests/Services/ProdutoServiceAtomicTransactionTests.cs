@@ -135,4 +135,55 @@ public class ProdutoServiceAtomicTransactionTests : IDisposable
         prod5.Saldo.Should().Be(10);
         prod6.Saldo.Should().Be(6);
     }
+
+    [Fact]
+    public async Task AbaterEstoqueLoteAsync_ComIdempotencyKey_DeveAbaterApenasNaPrimeiraChamadaEIgnorarNoReenvio()
+    {
+        // Arrange
+        _context.Produtos.Add(new Produto { Codigo = "IDEM-01", Descricao = "Produto Idempotente", Saldo = 20 });
+        await _context.SaveChangesAsync();
+
+        var lote = new List<AbaterItemEstoqueDto> { new AbaterItemEstoqueDto("IDEM-01", 5) };
+        var idempotencyKey = "NF-9999";
+
+        // Act 1: Primeira execução (Deve abater de 20 para 15)
+        var executadoPrimeiraVez = await _produtoService.AbaterEstoqueLoteAsync(lote, idempotencyKey);
+
+        // Assert 1
+        executadoPrimeiraVez.Should().BeTrue();
+        var prod1 = await _context.Produtos.FirstAsync(p => p.Codigo == "IDEM-01");
+        prod1.Saldo.Should().Be(15);
+
+        // Act 2: Reenvio com a mesma chave (Deve ser ignorado por idempotência e manter saldo em 15)
+        var executadoSegundaVez = await _produtoService.AbaterEstoqueLoteAsync(lote, idempotencyKey);
+
+        // Assert 2
+        executadoSegundaVez.Should().BeFalse();
+        _context.ChangeTracker.Clear();
+        var prodReconsultado = await _context.Produtos.FirstAsync(p => p.Codigo == "IDEM-01");
+        prodReconsultado.Saldo.Should().Be(15, "o saldo não deve ser alterado em um reenvio com a mesma chave de idempotência.");
+    }
+
+    [Fact]
+    public async Task AbaterEstoqueAsync_ConcorrenciaSimultanea_DeveImpedirOverbookingEManterSaldoZero()
+    {
+        // Arrange (Produto com Saldo = 1 no banco SQLite relacional)
+        _context.Produtos.Add(new Produto { Codigo = "RACE-01", Descricao = "Notebook Ultimo Item", Saldo = 1 });
+        await _context.SaveChangesAsync();
+
+        // Act 1: Primeira tentativa de abate (Saldo passa de 1 para 0)
+        await _produtoService.AbaterEstoqueAsync("RACE-01", 1);
+        var prod1 = await _context.Produtos.FirstAsync(p => p.Codigo == "RACE-01");
+        prod1.Saldo.Should().Be(0);
+
+        // Act 2: Segunda tentativa concorrente com Saldo = 0
+        Func<Task> actSegundaVez = async () => await _produtoService.AbaterEstoqueAsync("RACE-01", 1);
+
+        // Assert: A segunda tentativa deve ser barrada por EstoqueInsuficienteException e manter saldo em 0
+        await actSegundaVez.Should().ThrowAsync<EstoqueInsuficienteException>();
+
+        _context.ChangeTracker.Clear();
+        var prodFinal = await _context.Produtos.FirstAsync(p => p.Codigo == "RACE-01");
+        prodFinal.Saldo.Should().Be(0, "o saldo final do produto não pode ficar negativo (prevenção total de overbooking).");
+    }
 }

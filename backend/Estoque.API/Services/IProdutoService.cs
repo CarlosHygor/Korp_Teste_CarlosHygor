@@ -13,7 +13,7 @@ public interface IProdutoService
     Task UpdateAsync(int id, Produto produto);
     Task DeleteAsync(int id);
     Task AbaterEstoqueAsync(string codigo, int quantidade);
-    Task AbaterEstoqueLoteAsync(IEnumerable<AbaterItemEstoqueDto> itens);
+    Task<bool> AbaterEstoqueLoteAsync(IEnumerable<AbaterItemEstoqueDto> itens, string? idempotencyKey = null);
     Task EstornarEstoqueAsync(string codigo, int quantidade);
     Task EstornarEstoqueLoteAsync(IEnumerable<AbaterItemEstoqueDto> itens);
 }

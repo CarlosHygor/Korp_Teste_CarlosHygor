@@ -100,7 +100,7 @@ public class NotaFiscalServiceTests
             .ReturnsAsync(notaAberta);
 
         _estoqueClientMock
-            .Setup(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>()))
+            .Setup(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -108,7 +108,7 @@ public class NotaFiscalServiceTests
 
         // Assert
         result.Status.Should().Be(StatusNotaFiscal.Fechada);
-        _estoqueClientMock.Verify(c => c.AbaterEstoqueLoteAsync(It.Is<IEnumerable<ItemAbateEstoqueDto>>(lote => lote.Count() == 2)), Times.Once);
+        _estoqueClientMock.Verify(c => c.AbaterEstoqueLoteAsync(It.Is<IEnumerable<ItemAbateEstoqueDto>>(lote => lote.Count() == 2), It.IsAny<string>()), Times.Once);
         _notaFiscalRepositoryMock.Verify(r => r.UpdateAsync(notaAberta), Times.Once);
     }
 
@@ -134,7 +134,7 @@ public class NotaFiscalServiceTests
         await act.Should().ThrowAsync<NotaFiscalStatusInvalidoException>()
             .WithMessage("*já está com status 'Fechada'*");
 
-        _estoqueClientMock.Verify(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>()), Times.Never);
+        _estoqueClientMock.Verify(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>(), It.IsAny<string>()), Times.Never);
         _notaFiscalRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<NotaFiscal>()), Times.Never);
     }
 
@@ -154,7 +154,7 @@ public class NotaFiscalServiceTests
             .ReturnsAsync(notaAberta);
 
         _estoqueClientMock
-            .Setup(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>()))
+            .Setup(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>(), It.IsAny<string>()))
             .ThrowsAsync(new NotaFiscalStatusInvalidoException("Serviço de estoque indisponível"));
 
         // Act
@@ -184,7 +184,7 @@ public class NotaFiscalServiceTests
             .ReturnsAsync(notaAberta);
 
         _estoqueClientMock
-            .Setup(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>()))
+            .Setup(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Simula falha de persistência no banco do Faturamento no momento da gravação do status Fechada
@@ -204,7 +204,7 @@ public class NotaFiscalServiceTests
             .WithMessage("*revertido com sucesso*");
 
         // Valida que o abate foi feito primeiro E em seguida a Ação Compensatória de estorno foi acionada
-        _estoqueClientMock.Verify(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>()), Times.Once);
+        _estoqueClientMock.Verify(c => c.AbaterEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>(), It.IsAny<string>()), Times.Once);
         _estoqueClientMock.Verify(c => c.EstornarEstoqueLoteAsync(It.IsAny<IEnumerable<ItemAbateEstoqueDto>>()), Times.Once);
     }
 

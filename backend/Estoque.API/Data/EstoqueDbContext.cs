@@ -9,8 +9,9 @@ public class EstoqueDbContext : DbContext
     {
     }
 
-    // DbSet representa a tabela 'Produtos' no banco de dados (equivalente ao JpaRepository/EntityManager no Spring)
+    // DbSet representa a tabela 'Produtos' e 'ProcessamentosIdempotentes' no banco de dados
     public DbSet<Produto> Produtos => Set<Produto>();
+    public DbSet<ProcessamentoIdempotente> ProcessamentosIdempotentes => Set<ProcessamentoIdempotente>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -36,6 +37,24 @@ public class EstoqueDbContext : DbContext
                   .HasMaxLength(200);
 
             entity.Property(p => p.Saldo)
+                  .IsRequired();
+        });
+
+        // Mapeamento da tabela 'processamentos_idempotentes' no PostgreSQL
+        modelBuilder.Entity<ProcessamentoIdempotente>(entity =>
+        {
+            entity.ToTable("processamentos_idempotentes");
+
+            entity.HasKey(p => p.Id);
+
+            entity.Property(p => p.Chave)
+                  .IsRequired()
+                  .HasMaxLength(100);
+
+            entity.HasIndex(p => p.Chave)
+                  .IsUnique();
+
+            entity.Property(p => p.DataProcessamentoUtc)
                   .IsRequired();
         });
     }

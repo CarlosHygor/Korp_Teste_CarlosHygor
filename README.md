@@ -32,6 +32,36 @@ graph TD
 
 ---
 
+## 🧠 Decisões de Arquitetura & Trade-offs (Architectural Decision Records)
+
+Nesta seção estão documentadas as decisões técnicas tomadas durante a concepção do sistema, registrando o racional de engenharia, prós e contras de produto:
+
+### 1. ⚡ Caching Distribuído (Redis vs. Consultas Indexadas no PostgreSQL)
+* **Contexto:** Avaliação da inclusão de camada de Cache (ex: Redis) para os endpoints de consulta paginada (`GET /api/produtos` e `GET /api/notasfiscais`).
+* **Decisão:** Opção por consultas indexadas diretamente no banco relacional PostgreSQL, sem adição de camada de cache em memória.
+* **Racional de Engenharia:**
+  - **Mutações Frequentes & Taxa de Invalidação:** A impressão de Notas Fiscais altera saldos de produtos constantemente. Em estratégias de *Cache-Aside*, essa mutação constante exigiria invalidações frequentes (*Cache Eviction*) de chaves de paginação e busca, reduzindo o *Cache Hit Rate* e tornando o cache ineficaz.
+  - **Garantia de Consistência Forte (ACID):** O domínio exige que o usuário veja imediatamente o saldo real do produto após a impressão de uma nota fiscal, evitando dados obsoletos (*stale data*).
+  - **Evitando Otimização Precoce (KISS / YAGNI):** As tabelas no PostgreSQL utilizam índices dedicados nas colunas de ordenação e busca, respondendo em sub-milissegundos (< 5ms) para a volumetria pretendida sem adicionar a complexidade operacional de infraestrutura do Redis.
+
+### 2. 🔑 Garantia de Idempotência e Padrão Saga na Integração de Microsserviços
+* **Contexto:** Prevenção de duplo abate de estoque em cenários de falha de rede (*Timeout* / *Retries*) durante a impressão de Notas Fiscais entre `Faturamento.API` e `Estoque.API`.
+* **Decisão:** Implementar a tabela `processamentos_idempotentes` e suporte a `IdempotencyKey` no endpoint `POST /api/produtos/abater-lote`.
+* **Racional de Engenharia:**
+  - **Desafios de Redes Instáveis:** Se o `Estoque.API` abater o saldo com sucesso, mas o pacote de resposta HTTP cair por *Timeout* de rede, o `Faturamento.API` não sabe se a operação foi concluída e tenta um *Retry*.
+  - **Deduplicação de Comandos:** O `Estoque.API` verifica se a `IdempotencyKey` (ex: `NF-0001`) já foi processada. Em caso positivo, retorna HTTP 200 OK sem descontar o saldo uma segunda vez (`saldo -= N`).
+  - **Ação Compensatória (Saga):** Se o banco do Faturamento falhar após o abate no Estoque, o sistema dispara o estorno atômico em lote (`EstornarEstoqueLoteAsync`).
+
+### 3. 🛡️ Tratamento de Concorrência e Prevenção de Overbooking (Defense in Depth)
+* **Contexto:** Garantir que quando dois usuários/notas tentarem abater o último item de um produto simultaneamente (Saldo = 1), o sistema impeça o abate duplicado (*Overbooking* / Saldo Negativo).
+* **Decisão:** Arquitetura de Proteção em 3 Camadas (*Defense in Depth*): *Pessimistic Row-Level Locking* nativo do PostgreSQL + Validação na Camada de Aplicação C# + *Check Constraint* física relacional (`CK_produtos_saldo`).
+* **Racional de Engenharia:**
+  - **Lock Pessimista de Linha:** Em transações `BeginTransactionAsync()`, o PostgreSQL bloqueia a linha do produto alterado. O segundo processo aguarda a liberação e lê o saldo re-atualizado (0).
+  - **Validação de Aplicação & Trava Física no Banco:** A aplicação barra o saldo insuficiente com `EstoqueInsuficienteException` (HTTP 422). Além disso, a constraint relacional `"Saldo" >= 0` impede fisicamente no banco qualquer inconsistência.
+
+---
+
+
 ## 🛠️ Status dos Módulos & Destaques de Engenharia
 
 ### 1. 📦 Microsserviço de Estoque (`Estoque.API`) — Status: ✅ Concluído

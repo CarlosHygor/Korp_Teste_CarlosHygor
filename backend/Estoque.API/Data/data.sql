@@ -37,3 +37,17 @@ INSERT INTO public.produtos ("Codigo", "Descricao", "Saldo") VALUES
 ('PROD-034', 'Caixa de Som Edifier R1000T4 Bivolt 24W RMS', 10),
 ('PROD-035', 'Organizador de Cabos Espiral 2 Metros Preto', 100)
 ON CONFLICT ("Codigo") DO NOTHING;
+
+-- Script de Carga Inicial (Seed Data) de Chaves de Idempotência para as Notas Fiscais Fechadas
+INSERT INTO public.processamentos_idempotentes ("Chave", "DataProcessamentoUtc") VALUES
+('NF-0003', NOW() - INTERVAL '28 days'),
+('NF-0006', NOW() - INTERVAL '25 days'),
+('NF-0009', NOW() - INTERVAL '22 days'),
+('NF-0012', NOW() - INTERVAL '19 days'),
+('NF-0015', NOW() - INTERVAL '16 days'),
+('NF-0018', NOW() - INTERVAL '13 days'),
+('NF-0022', NOW() - INTERVAL '10 days'),
+('NF-0025', NOW() - INTERVAL '7 days'),
+('NF-0028', NOW() - INTERVAL '4 days')
+ON CONFLICT ("Chave") DO NOTHING;
+

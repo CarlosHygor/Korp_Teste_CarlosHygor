@@ -1,6 +1,6 @@
 # 🧪 Relatório Centralizado de Execução de Testes
 
-> **Última execução:** `17/08/2026, 23:16:00 UTC`
+> **Última execução:** `18/08/2026, 00:36:09 UTC`
 
 ---
 
@@ -8,8 +8,8 @@
 
 | Métrica | Valor |
 | :--- | :--- |
-| 🧮 **Total de Testes** | **65** |
-| ✅ **Aprovados** | **65** |
+| 🧮 **Total de Testes** | **67** |
+| ✅ **Aprovados** | **67** |
 | ❌ **Reprovados** | **0** |
 | 📈 **Taxa de Sucesso** | **100.0%** |
 
@@ -17,33 +17,35 @@
 
 ## 📦 1. API de Estoque (.NET 8)
 - **Status:** ✅ Passou
-- **Aprovados:** `23/23`
+- **Aprovados:** `25/25`
 
 | Status | Teste | Duração |
 | :---: | :--- | :--- |
-| ✅ | `GetPaginatedAsync_DeveRetornarResultadoPaginadoEPropriedadesCalculadas` | `00:00:00` |
-| ✅ | `AbaterEstoque_QuandoSaldoForSuficiente_DeveRetornarStatus200OK` | `00:00:01` |
 | ✅ | `EstornarEstoqueAsync_DeveRestabelecerSaldo_QuandoQuantidadeForValida` | `00:00:00` |
-| ✅ | `AddAsync_E_GetByCodigoAsync_DeveSalvarEBuscarProdutoRealNoDbContext` | `00:00:00` |
-| ✅ | `AbaterEstoqueLoteAsync_QuandoUmItemTiverEstoqueInsuficiente_DeveRealizarRollbackAtomicamenteDeTodosOsItens` | `00:00:01` |
-| ✅ | `CreateAsync_QuandoBancoLancarDbUpdateException_DeveTraduzirParaCodigoProdutoDuplicadoException` | `00:00:00` |
-| ✅ | `GetPaginatedAsync_ComOrdenacaoSaldo_DeveRepassarOrdenacaoParaRepositorio` | `00:00:00` |
-| ✅ | `CreateAsync_QuandoSaldoForNegativo_DeveLancarArgumentException` | `00:00:00` |
-| ✅ | `AbaterEstoqueAsync_QuandoProdutoNaoExistir_DeveLancarKeyNotFoundException` | `00:00:00` |
-| ✅ | `CreateAsync_QuandoDadosForemValidos_DeveAdicionarEGrafarProduto` | `00:00:00` |
-| ✅ | `EstornarEstoqueLote_QuandoRequisicaoForValida_DeveRetornarStatus200OK` | `00:00:00` |
-| ✅ | `AbaterEstoqueAsync_QuandoQuantidadeForInvalida_DeveLancarArgumentException(quantidadeInvalida: -5)` | `00:00:00` |
-| ✅ | `AbaterEstoqueLoteAsync_DeveAbaterTodosOsProdutos_QuandoTodosForemValidos` | `00:00:00` |
-| ✅ | `AbaterEstoqueAsync_QuandoQuantidadeForInvalida_DeveLancarArgumentException(quantidadeInvalida: 0)` | `00:00:00` |
 | ✅ | `EstornarEstoqueLoteAsync_DeveRestabelecerSaldoDeTodosOsProdutosAtomicamente` | `00:00:00` |
-| ✅ | `AbaterEstoqueLoteAsync_QuandoUmItemDaListaForInexistente_DeveRealizarRollbackAtomicamenteDeTodosOsItens` | `00:00:00` |
-| ✅ | `AbaterEstoqueAsync_QuandoSaldoForInsuficiente_DeveLancarEstoqueInsuficienteExceptionENaoAlterarSaldo` | `00:00:00` |
-| ✅ | `AbaterEstoque_QuandoQuantidadeForInvalida_DeveRetornarStatus400BadRequest` | `00:00:00` |
+| ✅ | `AbaterEstoqueAsync_QuandoQuantidadeForInvalida_DeveLancarArgumentException(quantidadeInvalida: 0)` | `00:00:00` |
 | ✅ | `AbaterEstoque_QuandoSaldoForInsuficiente_DeveRetornarStatus422UnprocessableEntity` | `00:00:00` |
-| ✅ | `GetPaginatedAsync_ComTermoBusca_DeveRepassarTermoParaRepositorio` | `00:00:00` |
-| ✅ | `AbaterEstoqueAsync_QuandoSaldoForSuficiente_DeveAbaterSaldoEAtualizarNoRepositorio` | `00:00:00` |
-| ✅ | `UpdateAsync_DeveAtualizarProdutoNoDbContextInMemory` | `00:00:00` |
+| ✅ | `AbaterEstoqueLoteAsync_QuandoUmItemTiverEstoqueInsuficiente_DeveRealizarRollbackAtomicamenteDeTodosOsItens` | `00:00:01` |
 | ✅ | `AbaterEstoqueLote_QuandoTodosOsItensForemValidos_DeveRetornarStatus200OK` | `00:00:00` |
+| ✅ | `AbaterEstoqueAsync_ConcorrenciaSimultanea_DeveImpedirOverbookingEManterSaldoZero` | `00:00:00` |
+| ✅ | `AbaterEstoqueAsync_QuandoSaldoForSuficiente_DeveAbaterSaldoEAtualizarNoRepositorio` | `00:00:00` |
+| ✅ | `AbaterEstoque_QuandoSaldoForSuficiente_DeveRetornarStatus200OK` | `00:00:01` |
+| ✅ | `CreateAsync_QuandoBancoLancarDbUpdateException_DeveTraduzirParaCodigoProdutoDuplicadoException` | `00:00:00` |
+| ✅ | `CreateAsync_QuandoDadosForemValidos_DeveAdicionarEGrafarProduto` | `00:00:00` |
+| ✅ | `AbaterEstoqueAsync_QuandoProdutoNaoExistir_DeveLancarKeyNotFoundException` | `00:00:00` |
+| ✅ | `AddAsync_E_GetByCodigoAsync_DeveSalvarEBuscarProdutoRealNoDbContext` | `00:00:00` |
+| ✅ | `AbaterEstoqueLoteAsync_ComIdempotencyKey_DeveAbaterApenasNaPrimeiraChamadaEIgnorarNoReenvio` | `00:00:00` |
+| ✅ | `UpdateAsync_DeveAtualizarProdutoNoDbContextInMemory` | `00:00:00` |
+| ✅ | `GetPaginatedAsync_ComOrdenacaoSaldo_DeveRepassarOrdenacaoParaRepositorio` | `00:00:00` |
+| ✅ | `EstornarEstoqueLote_QuandoRequisicaoForValida_DeveRetornarStatus200OK` | `00:00:00` |
+| ✅ | `AbaterEstoqueLoteAsync_QuandoUmItemDaListaForInexistente_DeveRealizarRollbackAtomicamenteDeTodosOsItens` | `00:00:00` |
+| ✅ | `CreateAsync_QuandoSaldoForNegativo_DeveLancarArgumentException` | `00:00:00` |
+| ✅ | `GetPaginatedAsync_DeveRetornarResultadoPaginadoEPropriedadesCalculadas` | `00:00:00` |
+| ✅ | `AbaterEstoqueAsync_QuandoQuantidadeForInvalida_DeveLancarArgumentException(quantidadeInvalida: -5)` | `00:00:00` |
+| ✅ | `AbaterEstoqueAsync_QuandoSaldoForInsuficiente_DeveLancarEstoqueInsuficienteExceptionENaoAlterarSaldo` | `00:00:00` |
+| ✅ | `AbaterEstoqueLoteAsync_DeveAbaterTodosOsProdutos_QuandoTodosForemValidos` | `00:00:00` |
+| ✅ | `AbaterEstoque_QuandoQuantidadeForInvalida_DeveRetornarStatus400BadRequest` | `00:00:00` |
+| ✅ | `GetPaginatedAsync_ComTermoBusca_DeveRepassarTermoParaRepositorio` | `00:00:00` |
 
 ---
 
@@ -53,24 +55,24 @@
 
 | Status | Teste | Duração |
 | :---: | :--- | :--- |
+| ✅ | `GetPaginatedAsync_ComFiltroStatus_DeveRepassarFiltroParaRepositorio` | `00:00:00` |
+| ✅ | `ImprimirAsync_DeveManterNotaAbertaEPropagarExcecao_QuandoAbateEmLoteFalhar` | `00:00:00` |
+| ✅ | `GetPaginatedAsync_ComOrdenacao_DeveRepassarOrdenacaoParaRepositorio` | `00:00:00` |
+| ✅ | `Create_QuandoPayloadForValido_DeveRetornarStatus201Created` | `00:00:00` |
 | ✅ | `GetByNumeracaoAsync_DeveRetornarNotaFiscal_QuandoNumeracaoExistir` | `00:00:00` |
 | ✅ | `CreateAsync_DeveLancarArgumentException_QuandoNotaNaoPossuirItens` | `00:00:00` |
-| ✅ | `ImprimirAsync_DeveLancarNotaFiscalStatusInvalidoException_QuandoNotaJaEstiverFechada` | `00:00:00` |
 | ✅ | `GetPaginatedAsync_DeveRetornarResultadoPaginadoEPropriedadesCalculadas` | `00:00:00` |
+| ✅ | `GetByNumeracao_QuandoNumeracaoExistir_DeveRetornarStatus200OKEPayloadValido` | `00:00:00` |
+| ✅ | `Create_QuandoListaDeItensForVazia_DeveRetornarStatus400BadRequest` | `00:00:00` |
+| ✅ | `ImprimirAsync_DeveAbaterEstoqueEmLoteEAtualizarStatusParaFechada_QuandoNotaEstiverAberta` | `00:00:00` |
 | ✅ | `AbaterEstoqueAsync_DeveLancarArgumentException_QuandoQuantidadeForZeroOuNegativa` | `00:00:00` |
-| ✅ | `GetPaginatedAsync_ComOrdenacao_DeveRepassarOrdenacaoParaRepositorio` | `00:00:00` |
-| ✅ | `CreateAsync_DevePersistirNotaComStatusInicialAbertaEItensRelacionados` | `00:00:01` |
-| ✅ | `Create_QuandoPayloadForValido_DeveRetornarStatus201Created` | `00:00:00` |
-| ✅ | `GetPaginatedAsync_ComFiltroStatus_DeveRepassarFiltroParaRepositorio` | `00:00:00` |
-| ✅ | `GetByNumeracao_QuandoNumeracaoExistir_DeveRetornarStatus200OKEPayloadValido` | `00:00:01` |
-| ✅ | `ImprimirAsync_DeveManterNotaAbertaEPropagarExcecao_QuandoAbateEmLoteFalhar` | `00:00:00` |
-| ✅ | `CreateAsync_DeveCriarNotaFiscalComStatusAbertaEDataUtc_QuandoDadosForemValidos` | `00:00:00` |
+| ✅ | `ImprimirAsync_DeveLancarNotaFiscalStatusInvalidoException_QuandoNotaJaEstiverFechada` | `00:00:00` |
 | ✅ | `AbaterEstoqueAsync_DeveInvocarEstoqueClient_QuandoItemForValido` | `00:00:00` |
 | ✅ | `Imprimir_QuandoNotaEstiverAbertaEEstoqueComSucesso_DeveRetornarStatus200OKENotaFechada` | `00:00:00` |
-| ✅ | `GetAll_DeveRetornarStatus200OKEListaDeNotas` | `00:00:00` |
-| ✅ | `ImprimirAsync_DeveAbaterEstoqueEmLoteEAtualizarStatusParaFechada_QuandoNotaEstiverAberta` | `00:00:00` |
-| ✅ | `Create_QuandoListaDeItensForVazia_DeveRetornarStatus400BadRequest` | `00:00:00` |
 | ✅ | `ImprimirAsync_DeveDispararEstornoDeEstoque_QuandoUpdateDoBancoFaturamentoFalhar` | `00:00:00` |
+| ✅ | `CreateAsync_DeveCriarNotaFiscalComStatusAbertaEDataUtc_QuandoDadosForemValidos` | `00:00:00` |
+| ✅ | `GetAll_DeveRetornarStatus200OKEListaDeNotas` | `00:00:00` |
+| ✅ | `CreateAsync_DevePersistirNotaComStatusInicialAbertaEItensRelacionados` | `00:00:00` |
 
 ---
 
