@@ -42,6 +42,19 @@ interface NotaFiscalView extends NotaFiscal {
       (aoFechar)="erroDetalhado = null"
     ></app-error-modal>
 
+    <!-- Modal de Confirmação de Exclusão de Nota Fiscal -->
+    <div class="confirm-overlay" *ngIf="notaParaExcluir" (click)="notaParaExcluir = null">
+      <div class="confirm-dialog" (click)="$event.stopPropagation()">
+        <div class="confirm-icon">⚠️</div>
+        <h3>Cancelar Nota Fiscal</h3>
+        <p>Tem certeza que deseja cancelar e excluir a Nota Fiscal <strong>#{{ formatarNumeracao(notaParaExcluir.numeracao) }}</strong>?</p>
+        <div class="confirm-actions">
+          <button class="btn-cancel" (click)="notaParaExcluir = null">Voltar</button>
+          <button class="btn-confirm-delete" (click)="executarExclusaoNota()">Sim, Cancelar Nota</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal de Sucesso -->
     <app-success-modal
       [dados]="mensagemSucessoModal"
@@ -663,6 +676,87 @@ interface NotaFiscalView extends NotaFiscal {
       opacity: 0.4;
       cursor: not-allowed;
     }
+
+    .confirm-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(10, 18, 23, 0.85);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 1rem;
+    }
+
+    .confirm-dialog {
+      background: #172832;
+      border: 1px solid #e11d48;
+      border-radius: 0.75rem;
+      padding: 1.75rem;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+
+    .confirm-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .confirm-dialog h3 {
+      margin: 0 0 0.5rem 0;
+      color: #f8fafc;
+      font-size: 1.25rem;
+    }
+
+    .confirm-dialog p {
+      color: #cbd5e1;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+    }
+
+    .confirm-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+
+    .btn-cancel {
+      background: #0f1c23;
+      color: #94a3b8;
+      border: 1px solid #294656;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+      background: #243f4e;
+      color: #fff;
+    }
+
+    .btn-confirm-delete {
+      background: #e11d48;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-confirm-delete:hover {
+      background: #be123c;
+    }
   `]
 })
 export class NotaFiscalListComponent implements OnInit {
@@ -816,23 +910,32 @@ export class NotaFiscalListComponent implements OnInit {
       });
   }
 
+  notaParaExcluir: NotaFiscalView | null = null;
+
   confirmarExclusao(nota: NotaFiscalView): void {
-    if (confirm(`Tem certeza que deseja cancelar e excluir a Nota Fiscal #${this.formatarNumeracao(nota.numeracao)}?`)) {
-      this.notaFiscalService.delete(nota.id).subscribe({
-        next: () => {
-          this.mensagemSucessoModal = {
-            titulo: 'Nota Fiscal Cancelada',
-            mensagem: `A Nota Fiscal #${this.formatarNumeracao(nota.numeracao)} foi removida.`
-          };
-          this.carregarNotas();
-        },
-        error: (err) => {
-          this.erroDetalhado = {
-            titulo: 'Erro ao Cancelar Nota Fiscal',
-            mensagem: err.error?.mensagem || 'Não foi possível excluir a nota fiscal.'
-          };
-        }
-      });
-    }
+    this.notaParaExcluir = nota;
+  }
+
+  executarExclusaoNota(): void {
+    if (!this.notaParaExcluir) return;
+
+    const nota = this.notaParaExcluir;
+    this.notaParaExcluir = null;
+
+    this.notaFiscalService.delete(nota.id).subscribe({
+      next: () => {
+        this.mensagemSucessoModal = {
+          titulo: 'Nota Fiscal Cancelada',
+          mensagem: `A Nota Fiscal #${this.formatarNumeracao(nota.numeracao)} foi removida.`
+        };
+        this.carregarNotas();
+      },
+      error: (err) => {
+        this.erroDetalhado = {
+          titulo: 'Erro ao Cancelar Nota Fiscal',
+          mensagem: err.error?.mensagem || 'Não foi possível excluir a nota fiscal.'
+        };
+      }
+    });
   }
 }
